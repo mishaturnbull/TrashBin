@@ -32,7 +32,7 @@ if __name__ == '__main__':
     import sys
 
     infilename = sys.argv[1]
-    outfilename = '.'.join([os.path.splitext(infilename)[0], '.param'])
+    outfilename = '.'.join([os.path.splitext(infilename)[0], 'param'])
     
     log = dfr.DFReader_binary(infilename)
     write_out_file(get_text_to_write(log), outfilename)
