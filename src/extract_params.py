@@ -23,5 +23,20 @@ def write_out_file(text, filename, force=False):
     """
     if os.path.exists(filename) and not force:
         return False
+    with open(filename, 'w') as pfile:
+        pfile.write(text)
+
+
+if __name__ == '__main__':
+    import src.DFReader as dfr
+    import sys
+
+    infilename = sys.argv[1]
+    outfilename = '.'.join([os.path.splitext(infilename)[0], '.param'])
+    
+    log = dfr.DFReader_binary(infilename)
+    write_out_file(get_text_to_write(log), outfilename)
+
+    print("Done!")
     
 
