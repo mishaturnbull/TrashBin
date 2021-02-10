@@ -11,6 +11,10 @@ def get_text_to_write(log):
     """
     Given a log file, return the file contents of the output .param file.
     """
+    # sometimes the dfreader fails to completely parse the file for some reason
+    # ensure it's done before continuing
+    while log.remaining:
+        log.recv_msg()
     params = log.params
     lines = []
     for key, val in params.items():
