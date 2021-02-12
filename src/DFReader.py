@@ -461,6 +461,7 @@ class DFReader(object):
         self.params = {}
         self._flightmodes = None
         self.messages = {}
+        self.all_messages = []
 
     def _rewind(self):
         '''reset state on rewind'''
@@ -592,7 +593,9 @@ class DFReader(object):
             self.clock.set_message_timestamp(m)
 
     def recv_msg(self):
-        return self._parse_next()
+        message = self._parse_next()
+        self.all_messages.append(message)
+        return message
 
     def _add_msg(self, m):
         '''add a new message'''
