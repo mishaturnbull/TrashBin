@@ -13,8 +13,10 @@ def get_text_to_write(log):
     """
     # sometimes the dfreader fails to completely parse the file for some reason
     # ensure it's done before continuing
-    while log.remaining:
-        log.recv_msg()
+    while True:
+        m = log.recv_msg()
+        if m is None:
+            break
     params = log.params
     lines = []
     for key, val in params.items():
