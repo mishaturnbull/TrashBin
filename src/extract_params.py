@@ -140,7 +140,11 @@ def grab_params_complex(log, multivalhandle=None, paramfilter=None):
             # uh-oh!  duplicate!
             if multivalhandle & MULTIVAL_WARN:
                 # let the user know
-                print("Duplicate parameter: {}".format(msg.to_dict()))
+                old = params[key]
+                new = val
+                print("Duplicate parameter: {}; was {}, now {}".format(
+                    key, old, new
+                ))
             if multivalhandle & MULTIVAL_FIRST:
                 # if only want the first parameter, skip. messages are sorted
                 # by arrival time, so anything after the first one comes later
