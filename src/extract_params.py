@@ -8,6 +8,7 @@ Extract parameters from a log file and write them to a specified .param file.
 import os
 import re
 import sys
+import argparse
 
 from . import message_remover
 
@@ -15,6 +16,44 @@ MULTIVAL_FIRST = 0x01
 MULTIVAL_LAST = 0x02
 MULTIVAL_FAIL = 0x04
 MULTIVAL_WARN = 0x08
+
+parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawTextHelpFormatter,
+)
+parser.add_argument(
+        'infilename',
+        type=str,
+        #        action='store_const',
+        help="Filename of the log for processing (.bin file)",
+)
+parser.add_argument(
+        '-o', '--output',
+        type=str,
+        #        action='store_const',
+        dest='outfilename',
+        help="Filename of the output parameter file.",
+)
+parser.add_argument(
+        '-d',
+        choices=['first', 'last', 'fail'],
+        dest='duplication',
+        default='last',
+        help='Handling of duplicate parameter values.',
+)
+parser.add_argument(
+        '-w', '--warn',
+        action='store_true',
+        dest='warn',
+        help='Emit warnings and info on duplicate parameter values',
+)
+parser.add_argument(
+        '-m', '--match',
+        type=str,
+        dest='paramfilter',
+        help="Regex to match parameter names by",
+        default='.*',
+)
 
 
 def params_to_filecontents(params):
@@ -133,11 +172,9 @@ def write_out_file(text, filename, force=False):
 
 if __name__ == '__main__':
     import src.DFReader as dfr
-    import sys
+    args = parser.parse_args()
 
-    infilename = sys.argv[1]
-    outfilename = '.'.join([os.path.splitext(infilename)[0], 'param'])
-    
+    infilename = args.infilename
     if os.path.splitext(infilename)[1].lower() == '.bin':
         cls = dfr.DFReader_binary
     elif os.path.splitext(infilename)[1].lower() == '.log':
@@ -145,9 +182,23 @@ if __name__ == '__main__':
     else:
         print("I don't know how to open that!")
         sys.exit(1)
+    if args.outfilename is None:
+        outfilename = os.path.splitext(infilename)[0] + '.param'
+    else:
+        outfilename = args.outfilename
+    
+    if args.duplication == 'first':
+        handling = MULTIVAL_FIRST
+    elif args.duplication == 'last':
+        handling = MULTIVAL_LAST
+    elif args.duplication == 'fail':
+        handling = MULTIVAL_FAIL
+    if args.warn:
+        handling += MULTIVAL_WARN
+
 
     log = cls(infilename)
-    params = grab_params_simple(log)
+    params = grab_params_complex(log, handling, [args.paramfilter])
     lines = params_to_filecontents(params)
     write_out_file(lines, outfilename)
 
