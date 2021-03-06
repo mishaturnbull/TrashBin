@@ -45,7 +45,6 @@ class DFWriter(object):
         return self.is_done
 
     def write_next_message(self):
-
         self.filehandle.write(self._gen_contents(self._msg_idx))
         self._msg_idx += 1
 
@@ -70,11 +69,11 @@ class DFWriter_text(DFWriter):
     """
     def _gen_contents(self, message_idx):
         msg = self.all_messages[message_idx]
-        s = msg.get_type() + ','
+        parts = [msg.get_type()]
         d = msg.to_dict()
         for col in msg.fmt.columns:
-            s += str(d[col]) + ','
-        s += '\n'
+            parts.append(str(d[col]))
+        s = ','.join(parts) + '\n'
         return s
 
     def _open_file(self):
