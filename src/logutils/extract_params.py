@@ -175,7 +175,7 @@ def write_out_file(text, filename, force=False):
 
 
 if __name__ == '__main__':
-    import src.DFReader as dfr
+    import src.logutils.DFReader as dfr
     args = parser.parse_args()
 
     infilename = args.infilename
@@ -207,5 +207,3 @@ if __name__ == '__main__':
     write_out_file(lines, outfilename)
 
     print("Done!")
-    
-
