@@ -158,6 +158,12 @@ class MainPanelUI(object):
     def cb_rm_plugs(self):
         pass
 
+    def cb_plug_up(self):
+        pass
+
+    def cb_plug_dn(self):
+        pass
+
     def cb_go(self):
         pass
 
@@ -213,37 +219,46 @@ class MainPanelUI(object):
         """
         Spawns the middle frame for adding/listing plugins
         """
+        # we want this frame to be the same size as the first one, so 
+        # force an update then use its width and height in the instantiator
+        self.frame1.update()
         self.frame2 = tk.LabelFrame(self.root, text="Plugin selection",
-                relief=tk.RIDGE)
-        self.frame2.grid(row=0, column=1)
+                relief=tk.RIDGE, width=self.frame1.winfo_width(),
+                height=self.frame1.winfo_height())
+        self.frame2.grid(row=0, column=1, sticky='nesw')
+        self.frame2.grid_propagate(0)
+        self.frame2.grid_columnconfigure(0, weight=1)
+        self.frame2.grid_rowconfigure(0, weight=1)
 
-        self.ui_pluglistbox = tk.Listbox(self.frame2, height=20, width=40)
-        self.ui_pluglistbox.grid(row=0, column=0)
+        self.ui_pluglistbox = tk.Listbox(self.frame2)
+        self.ui_pluglistbox.grid(row=0, column=0, sticky='nesw')
+        self.ui_pluglistbox.grid_rowconfigure(0, weight=1)
+        self.ui_pluglistbox.grid_columnconfigure(0, weight=1)
         self.ui_pluglistbox.bind("<<ListboxSelect>>", self.cb_plugselect)
 
-        # again, don't need to save these for later, just the callbacks
+        plugupbtn = tk.Button(self.frame2, text="Move plugin up",
+                command=self.cb_plug_up)
+        plugupbtn.grid(row=1, column=0, sticky='esw')
+        
+        plugdnbtn = tk.Button(self.frame2, text="Move plugin down",
+                command=self.cb_plug_dn)
+        plugdnbtn.grid(row=2, column=0, sticky='esw')
+
         addplugbtn = tk.Button(self.frame2, text="Add Plugin(s)",
                 command=self.cb_add_plugs)
-        addplugbtn.grid(row=1, column=0, sticky='nesw')
+        addplugbtn.grid(row=3, column=0, sticky='esw')
 
         rmplugbtn = tk.Button(self.frame2, text='Remove Plugin(s)',
                 command=self.cb_rm_plugs)
-        rmplugbtn.grid(row=2, column=0, sticky='nesw')
+        rmplugbtn.grid(row=4, column=0, sticky='esw')
 
     def spawn_ui_frame3(self):
         """
         Spawns the right frame for plugin-specific options
         """
-        # need to determine the size of frame2 to set this one equal to it
-        # first, you have to force an update
-        self.frame2.update()
-        # then, get the size and parse it
-        geo = self.frame2.winfo_geometry()
-        width = int(geo.split('x')[0])
-        height = int(geo.split('x')[1].split('+')[0])
-        # and then set it in the instantiator
         self.frame3 = tk.LabelFrame(self.root, text="Plugin configuration",
-                relief=tk.RIDGE, width=width, height=height)
+                relief=tk.RIDGE, width=self.frame1.winfo_width(),
+                height=self.frame1.winfo_height())
         self.frame3.grid(row=0, column=2, sticky='nesw')
 
     def spawn_ui_frame4(self):

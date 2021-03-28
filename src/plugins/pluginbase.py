@@ -65,3 +65,8 @@ class TrashBinPlugin(object):
         pass
     _must_be_overriden.append(cleanup_and_exit)
 
+    @_mark_for_override_detection
+    def run(self):
+        pass
+    _must_be_overriden.append(run)
+
