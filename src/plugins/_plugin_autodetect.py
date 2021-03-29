@@ -8,6 +8,7 @@ a list.
 
 import os
 import importlib
+import src.plugins.pluginbase as pb
 
 _KNOWN_FILES = [
         "_plugin_autodetect.py",
@@ -85,11 +86,35 @@ def wanted_file_list():
         wanted.append(f)
     return wanted
 
-def plugin_list():
+def module_list():
     modules = []
     for plugin in wanted_file_list():
         filename = os.path.join(find_plugins_dir(), plugin)[:-3]
         modname = filename.replace('/', '.')
         modules.append(importlib.import_module(modname))
     return modules
+
+def identify_valid_plugins(module):
+    attribs = dir(module)
+    valid_plugins = []
+    for attrib in attribs:
+        attrib = getattr(module, attrib)
+        if not isinstance(attrib, type):
+            continue
+        if not hasattr(attrib, '__mro__'):
+            continue
+        if not pb.TrashBinPlugin in attrib.__mro__:
+            continue
+
+        valid_plugins.append(attrib)
+    return valid_plugins
+
+def plugin_list():
+    modules = module_list()
+    plugins = []
+    for module in modules:
+        module_plugins = identify_valid_plugins(module)
+        for mp in module_plugins:
+            plugins.append(mp)
+    return plugins
 

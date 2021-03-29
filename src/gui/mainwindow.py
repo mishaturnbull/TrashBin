@@ -9,6 +9,7 @@ Responsible for starting and delegating tasks.
 
 import tkinter as tk
 import tkinter.filedialog as tkfd
+import tkinter.messagebox as tkmb
 from tkinter import ttk
 import os
 import src.logutils.DFReader as dfr
@@ -23,26 +24,24 @@ class PluginLoaderPanel(object):
     def __init__(self, parent, plugins_available):
         self.parent = parent
         self.plugins_available = plugins_available
-        self.selected = []
         self.spawn_ui()
-        self.root.mainloop()
 
     def cb_loadsel(self):
-        selected = self.pluginselbox.curselected()
+        selected = self.pluginselbox.curselection()
         for i in selected:
             plugin = self.plugins_available[i]
-            self.parent.plugins.append(plugin)
+            self.parent.ui_pluglistbox.insert(tk.END, plugin.plugin_name)
 
-    def cb_describe(self):
-        selected = self.pluginselbox.curselected()
+    def cb_describe(self, event):
+        selected = self.pluginselbox.curselection()
         plugin = self.plugins_available[selected[0]]
         text = "Author: {}\n{}\n\n{}".format(
                 plugin.author_name, plugin.author_email, plugin.plugin_desc)
         # now that we have the text, first delete anything currently in the
         # description box to clear it out
-        self.detailsbox.delete(0, tk.END)
+        self.detailsbox.delete('1.0', tk.END)
         # now put our text in!
-        self.detailsbox.insert(0, text)
+        self.detailsbox.insert('1.0', text)
 
     def spawn_ui(self):
         """
@@ -68,7 +67,8 @@ class PluginLoaderPanel(object):
 
         # populate the plugin list
         for plugin in self.plugins_available:
-            self.pluginselbox.insert(tk.END. plugin.plugin_name)
+            print(plugin)
+            self.pluginselbox.insert(tk.END, plugin.plugin_name)
 
         # plugin details box
         listframe.update()
@@ -85,8 +85,7 @@ class MainPanelUI(object):
     """
 
     def __init__(self):
-        self.plugins = []
-        self.children = []
+        self.available_plugins = []
         self.root = tk.Tk()
         self.processor = None
         self.debug = tk.BooleanVar()
@@ -105,6 +104,22 @@ class MainPanelUI(object):
             # ui_filelistbox doesn't exist yet
             return []
 
+    @property
+    def plugins(self):
+        try:
+            l = list(self.ui_pluglistbox.get(0, tk.END))
+        except AttributeError:
+            # it doesn't exist yet, or is empty...
+            return []
+        # the box only stores the string name, not the actual plugin.  we have
+        # to correlate that back to the actual plugin object here
+        plugins = []
+        for pname in l:
+            for availplug in self.available_plugins:
+                if availplug.plugin_name == pname:
+                    plugins.append(availplug)
+        return plugins
+
     def spawn_ui(self):
         self.root.title("TrashBin Log Utility")
         
@@ -113,6 +128,8 @@ class MainPanelUI(object):
         self.spawn_ui_frame2()
         self.spawn_ui_frame3()
         self.spawn_ui_frame4()
+
+        self.root.resizable(False, False)
 
     def cb_save_plugins(self):
         pass
@@ -147,16 +164,48 @@ class MainPanelUI(object):
         for i in selected[::-1]:
             self.ui_filelistbox.delete(i)
 
+    def cb_rm_all_files(self):
+        """
+        Callback to remove all files from the input file list
+        """
+        # if we have more than 5 files, check with the user
+        if len(self.files) >= 5:
+            res = tkmb.askyesno("Remove All", "Are you sure you want to " \
+                    "remove all input files?")
+            if not res:
+                # they said no
+                return
+        for i in range(len(self.files))[::-1]:
+            self.ui_filelistbox.delete(i)
+
     def cb_add_plugs(self):
         """
         Callback to load plugin(s) from the available plugin list.
         Plugin list is provided by the plugin manager.
         """
-        available_plugins = _pad.plugin_list()
-        plp = PluginLoaderPanel(self, available_plugins)
+        self.available_plugins = _pad.plugin_list()
+        plp = PluginLoaderPanel(self, self.available_plugins)
 
     def cb_rm_plugs(self):
-        pass
+        """
+        Callback to remove selected plugin(s) from the input list.
+        """
+        selected = self.ui_pluglistbox.curselection()
+        for i in selected[::-1]:
+            self.ui_pluglistbox.delete(i)
+
+    def cb_rm_all_plugs(self):
+        """
+        Callback to remove all currently listed plugins.
+        """
+        if len(self.plugins) >= 5:
+            res = tkmb.askyesno("Remove All", "Are you sure you want to " \
+                    "unload all plugins?")
+            if not res:
+                # they said no
+                return
+        for i in range(len(self.plugins))[::-1]:
+            self.ui_pluglistbox.delete(i)
 
     def cb_plug_up(self):
         pass
@@ -167,7 +216,7 @@ class MainPanelUI(object):
     def cb_go(self):
         pass
 
-    def cb_plugselect(self):
+    def cb_plugselect(self, event):
         pass
 
     def spawn_ui_menubar(self):
@@ -201,19 +250,24 @@ class MainPanelUI(object):
         self.frame1 = tk.LabelFrame(self.root, text="File selection",
                 relief=tk.RIDGE)
         self.frame1.grid(row=0, column=0)
+        self.frame1.grid_columnconfigure(0, weight=1, uniform='a')
+        self.frame1.grid_columnconfigure(1, weight=1, uniform='a')
 
         self.ui_filelistbox = tk.Listbox(self.frame1, height=20, width=40,
                 selectmode='multiple')
-        self.ui_filelistbox.grid(row=0, column=0)
+        self.ui_filelistbox.grid(row=0, column=0, columnspan=2)
 
         # we don't need to save this for anything later on
         addfilebtn = tk.Button(self.frame1, text="Add File(s)",
                 command=self.cb_add_files)
-        addfilebtn.grid(row=1, column=0, sticky='nesw')
+        addfilebtn.grid(row=1, column=0, columnspan=2, sticky='nesw')
 
-        rmfilebtn = tk.Button(self.frame1, text='Remove File(s)',
+        rmfilebtn = tk.Button(self.frame1, text='Remove Selected',
                 command=self.cb_rm_files)
         rmfilebtn.grid(row=2, column=0, sticky='nesw')
+        rmallbtn = tk.Button(self.frame1, text='Remove All',
+                command=self.cb_rm_all_files)
+        rmallbtn.grid(row=2, column=1, sticky='nesw')
     
     def spawn_ui_frame2(self):
         """
@@ -227,30 +281,34 @@ class MainPanelUI(object):
                 height=self.frame1.winfo_height())
         self.frame2.grid(row=0, column=1, sticky='nesw')
         self.frame2.grid_propagate(0)
-        self.frame2.grid_columnconfigure(0, weight=1)
+        self.frame2.grid_columnconfigure(0, weight=1, uniform='a')
+        self.frame2.grid_columnconfigure(1, weight=1, uniform='a')
         self.frame2.grid_rowconfigure(0, weight=1)
 
         self.ui_pluglistbox = tk.Listbox(self.frame2)
-        self.ui_pluglistbox.grid(row=0, column=0, sticky='nesw')
+        self.ui_pluglistbox.grid(row=0, column=0, columnspan=2, sticky='nesw')
         self.ui_pluglistbox.grid_rowconfigure(0, weight=1)
         self.ui_pluglistbox.grid_columnconfigure(0, weight=1)
         self.ui_pluglistbox.bind("<<ListboxSelect>>", self.cb_plugselect)
 
         plugupbtn = tk.Button(self.frame2, text="Move plugin up",
                 command=self.cb_plug_up)
-        plugupbtn.grid(row=1, column=0, sticky='esw')
+        plugupbtn.grid(row=1, column=0, columnspan=2, sticky='esw')
         
         plugdnbtn = tk.Button(self.frame2, text="Move plugin down",
                 command=self.cb_plug_dn)
-        plugdnbtn.grid(row=2, column=0, sticky='esw')
+        plugdnbtn.grid(row=2, column=0, columnspan=2, sticky='esw')
 
         addplugbtn = tk.Button(self.frame2, text="Add Plugin(s)",
                 command=self.cb_add_plugs)
-        addplugbtn.grid(row=3, column=0, sticky='esw')
+        addplugbtn.grid(row=3, column=0, columnspan=2, sticky='esw')
 
-        rmplugbtn = tk.Button(self.frame2, text='Remove Plugin(s)',
+        rmplugbtn = tk.Button(self.frame2, text='Remove Selected',
                 command=self.cb_rm_plugs)
         rmplugbtn.grid(row=4, column=0, sticky='esw')
+        rmallbtn = tk.Button(self.frame2, text='Remove All',
+                command=self.cb_rm_all_plugs)
+        rmallbtn.grid(row=4, column=1, sticky='esw')
 
     def spawn_ui_frame3(self):
         """
