@@ -51,7 +51,6 @@ def find_plugins_dir(startdir='.'):
 
 def recursive_list_of_files(startdir='.'):
     files = os.listdir(startdir)
-    print("Starting recurse {}".format(startdir))
     subdirs = []
     for f in files:
         if os.path.isdir(os.path.join(startdir, f)):
@@ -61,7 +60,6 @@ def recursive_list_of_files(startdir='.'):
         subfiles = recursive_list_of_files(os.path.join(startdir, subdir))
         for subfile in subfiles:
             files.append(os.path.join(subdir, subfile))
-    print("Recursed {}: {}".format(startdir, files))
     return files
 
 def list_of_importable_files():

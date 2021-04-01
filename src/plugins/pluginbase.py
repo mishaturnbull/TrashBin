@@ -51,12 +51,12 @@ class TrashBinPlugin(object):
                     "Method {} must be overriden!".format(function.__name__)
 
     @_mark_for_override_detection
-    def start_ui(self):
+    def start_ui(self, frame):
         pass
     _must_be_overriden.append(start_ui)
 
     @_mark_for_override_detection
-    def stop_ui(self):
+    def stop_ui(self, frame):
         pass
     _must_be_overriden.append(stop_ui)
 
@@ -68,15 +68,16 @@ class TrashBinPlugin(object):
     @_mark_for_override_detection
     def run_filename(self, filename):
         pass
-    _must_be_overriden.append(run_filename)
 
     @_mark_for_override_detection
     def run_filehandle(self, filehandle):
         pass
-    _must_be_overriden.append(run_filehandle)
+
+    @_mark_for_override_detection
+    def run_parsedlog(self, dflog):
+        pass
 
     @_mark_for_override_detection
     def run_messages(self, messages):
         pass
-    _must_be_overriden.append(run_messages)
 
