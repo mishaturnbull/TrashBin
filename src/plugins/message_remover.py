@@ -13,7 +13,7 @@ class MessageRemoverPlugin(pluginbase.TrashBinPlugin):
 
     author_name = "Misha Turnbull"
     author_email = "misha@turnbull.link"
-    plugin_name = "MessageRemover"
+    plugin_name = "Message Remover"
     plugin_desc = "This plugin allows for selective removal of MAVLink log " \
             "messages in a log file."
     
@@ -24,12 +24,6 @@ class MessageRemoverPlugin(pluginbase.TrashBinPlugin):
         super().__init__(self, handler)
         self.filter = []
         self.keeping = False
-
-    def run_filename(self, filename):
-        pass
-
-    def run_filehandle(self, filehandle):
-        pass
 
     def run_messages(self, messages):
         pass

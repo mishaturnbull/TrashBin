@@ -5,6 +5,9 @@
 GUI plugin for parameter file generation
 """
 
+import os
+import tkinter as tk
+import tkinter.ttk as ttk
 import src.plugins.pluginbase as pluginbase
 import src.logutils.extract_params as extract_params
 
@@ -26,20 +29,31 @@ class ParamExtractPlugin(pluginbase.TrashBinPlugin):
         super().__init__(self, handler)
         self.infilename = None
         self.outfilename = None
+        self.multivalhandle = None
+        self.paramfilter = None
+        self.force_output = False
     
     def run_filename(self, filename):
         self.infilename = filename
+        if self.outfilename is None:
+            self.outfilename = os.path.splitext(filename)[0] + '.param'
 
-    def run_filehandle(self, filehandle):
+    def run_parsedlog(self, dflog):
+        self.params = extract_params.grab_params_complex(
+                dflog,
+                multivalhandle=self.multivalhandle,
+                paramfilter=self.paramfilter
+            )
+        extract_params.write_out_file(
+                extract_params.params_to_filecontents(self.params),
+                self.outfilename,
+                force=self.force_output
+            )
+
+    def start_ui(self, frame):
         pass
 
-    def run_messages(self, messages):
-        pass
-
-    def start_ui(self):
-        pass
-
-    def stop_ui(self):
+    def stop_ui(self, frame):
         pass
 
     def cleanup_and_exit(self):
