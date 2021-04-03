@@ -30,8 +30,11 @@ class ParamExtractPlugin(pluginbase.TrashBinPlugin):
         self.infilename = None
         self.outfilename = None
         self.multivalhandle = tk.IntVar()
+        self.multivalhandle.set(extract_params.MULTIVAL_FIRST)
         self.paramfilter = tk.StringVar()
+        self.paramfilter.set('.*')
         self.force_output = tk.BooleanVar()
+        self.force_output.set(False)
     
     def run_filename(self, filename):
         self.infilename = filename
@@ -41,13 +44,13 @@ class ParamExtractPlugin(pluginbase.TrashBinPlugin):
     def run_parsedlog(self, dflog):
         self.params = extract_params.grab_params_complex(
                 dflog,
-                multivalhandle=self.multivalhandle,
-                paramfilter=self.paramfilter
+                multivalhandle=self.multivalhandle.get(),
+                paramfilter=[self.paramfilter.get()]
             )
         extract_params.write_out_file(
                 extract_params.params_to_filecontents(self.params),
                 self.outfilename,
-                force=self.force_output
+                force=self.force_output.get()
             )
 
     def start_ui(self, frame):

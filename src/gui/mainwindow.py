@@ -16,6 +16,10 @@ import src.logutils.DFReader as dfr
 import src.plugins._plugin_autodetect as _pad
 import src.gui.pluginloader as pluginloader
 
+# the processor selection isn't as user-importable as plugins, we just import
+# them all and then pick
+import src.processor.singlethread as singlethread
+
 
 class MainPanelUI(object):
     """
@@ -25,7 +29,6 @@ class MainPanelUI(object):
     def __init__(self):
         self.available_plugins = []
         self.root = tk.Tk()
-        self.processor = None
         self.debug = tk.BooleanVar()
         self.debug.set(False)
         self.pbar_var = tk.IntVar()
@@ -34,6 +37,7 @@ class MainPanelUI(object):
         self.plugmap = {}
 
         self.spawn_ui()
+        self.processor = singlethread.SingleThreadProcessor(self)
         self.root.mainloop()
 
     @property
@@ -45,7 +49,7 @@ class MainPanelUI(object):
             return []
 
     @property
-    def plugins(self):
+    def plugin_classes(self):
         try:
             l = list(self.ui_pluglistbox.get(0, tk.END))
         except AttributeError:
@@ -59,6 +63,10 @@ class MainPanelUI(object):
                 if availplug.plugin_name == pname:
                     plugins.append(availplug)
         return plugins
+
+    @property
+    def plugins(self):
+        return self.plugmap.values()
 
     def spawn_ui(self):
         self.root.title("TrashBin Log Utility")
@@ -77,7 +85,7 @@ class MainPanelUI(object):
     def cb_load_plugins(self):
         pass
 
-    def cb_options(self):
+    def cb_procoptions(self):
         pass
 
     def cb_add_files(self):
@@ -181,7 +189,24 @@ class MainPanelUI(object):
         self.ui_pluglistbox.selection_set(idx + 1)
 
     def cb_go(self):
-        pass
+        """
+        Callback to handle the start(/stop) button press.
+        """
+        if not self.processor.active:
+            # start
+            self.pbar['maximum'] = self.processor.max_work
+            self.pbar_var.set(0)
+            self.btn_go.config(text="Stop")
+            self.processor.update()
+            self.processor.active = True
+            print("About to start")
+            self.processor.run()
+            print("Started")
+        else:
+            # inactive
+            self.processor.stop()
+            self.btn_go.config(text="Start")
+            self.processor.active = False
 
     def cb_plugselect(self, event):
         """
@@ -245,8 +270,8 @@ class MainPanelUI(object):
         menu_opts.add_checkbutton(label="Debug",
                 onvalue=1, offvalue=0,
                 variable=self.debug)
-        menu_opts.add_command(label="Options",
-                command=self.cb_options)
+        menu_opts.add_command(label="Processing options",
+                command=self.cb_procoptions)
 
         self.root.config(menu=self.menu)
 
@@ -343,7 +368,7 @@ class MainPanelUI(object):
         self.btn_go.grid(row=0, column=0, sticky='nesw')
 
         self.pbar = ttk.Progressbar(self.frame4, orient='horizontal',
-                length=self.frame4.winfo_width(), mode='indeterminate',
-                variable=self.pbar_var)
+                length=self.frame4.winfo_width(), mode='determinate',
+                variable=self.pbar_var, maximum=100)
         self.pbar.grid(row=1, column=0, sticky='sw')
 

@@ -1210,6 +1210,14 @@ class DFReader_text(DFReader):
         m = self.recv_msg()
         return m._timestamp
 
+def DFReader_auto(filename):
+    if filename.lower().endswith('.bin'):
+        return DFReader_binary(filename)
+    elif filename.lower().endswith('.log'):
+        return DFReader_text(filename)
+    else:
+        raise ValueError("Don't know how to read {}".format(filename))
+
 if __name__ == "__main__":
     use_profiler = False
     if use_profiler:
