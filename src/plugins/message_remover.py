@@ -21,17 +21,17 @@ class MessageRemoverPlugin(pluginbase.TrashBinPlugin):
         """
         Create an instance of the message remover plugin for TrashBin UI.
         """
-        super().__init__(self, handler)
+        super().__init__(handler)
         self.filter = []
         self.keeping = False
 
     def run_messages(self, messages):
         pass
         
-    def start_ui(self):
+    def start_ui(self, frame):
         pass
 
-    def stop_ui(self):
+    def stop_ui(self, frame):
         pass
 
     def cleanup_and_exit(self):

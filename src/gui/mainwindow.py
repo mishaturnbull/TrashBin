@@ -92,6 +92,8 @@ class MainPanelUI(object):
         self.debug.set(False)
         self.pbar_var = tk.IntVar()
         self.pbar_var.set(0)
+        self._plugui = None
+        self.plugmap = {}
 
         self.spawn_ui()
         self.root.mainloop()
@@ -193,6 +195,10 @@ class MainPanelUI(object):
         selected = self.ui_pluglistbox.curselection()
         for i in selected[::-1]:
             self.ui_pluglistbox.delete(i)
+        self.ui_pluglistbox.selection_clear(0, tk.END)
+        # now that selection has been cleared, invoke the selected cb to
+        # remove UI elements and cleanup the plugin
+        self.cb_plugselect(None)
 
     def cb_rm_all_plugs(self):
         """
@@ -204,20 +210,83 @@ class MainPanelUI(object):
             if not res:
                 # they said no
                 return
+        self.ui_pluglistbox.selection_clear(0, tk.END)
         for i in range(len(self.plugins))[::-1]:
             self.ui_pluglistbox.delete(i)
+            self.cb_plugselect(None)
 
     def cb_plug_up(self):
-        pass
+        """
+        Callback to move a plugin up the chain.
+        """
+        idx = self.ui_pluglistbox.curselection()[0]
+        # check if we're at the top (or the only one)
+        if idx == 0:
+            # nothing to do!
+            return
+        item = self.ui_pluglistbox.get(idx)
+        self.ui_pluglistbox.delete(idx)
+        self.ui_pluglistbox.insert(idx - 1, item)
+        self.ui_pluglistbox.selection_set(idx - 1)
 
     def cb_plug_dn(self):
-        pass
+        """
+        Callback to move a plugin down the chain.
+        """
+        idx = self.ui_pluglistbox.curselection()[0]
+        # are we at the bottom
+        if idx == len(self.plugins) - 1:
+            return
+        item = self.ui_pluglistbox.get(idx)
+        self.ui_pluglistbox.delete(idx)
+        self.ui_pluglistbox.insert(idx + 1, item)
+        self.ui_pluglistbox.selection_set(idx + 1)
 
     def cb_go(self):
         pass
 
     def cb_plugselect(self, event):
-        pass
+        """
+        Callback for what do when a plugin is selected.
+        """
+        try:
+            idx = self.ui_pluglistbox.curselection()[0]
+        except IndexError:
+            # no selection
+            idx = None
+        # first thing to do is destroy the old ui if it's still up
+        if not (self._plugui is None):
+            try:
+                self._plugui.stop_ui(self.frame3)
+            except Exception as e:
+                if self.debug.get():
+                    raise
+                else:
+                    pass
+            finally:
+                self._plugui.is_active = False
+        self._plugui = None
+        # ok, old plugin ui is out of the way now
+        # check if anything is actually selected
+        if idx is None:
+            # nope, get outta here
+            return
+        plugname = self.ui_pluglistbox.get(idx)
+        # load the real plugin - have to search through our .plugmap dict
+        for key, val in self.plugmap.items():
+            if val.plugin_name == plugname:
+                self._plugui = val
+                break
+        # mark as active & setup new plugin UI!
+        try:
+            self._plugui.start_ui(self.frame3)
+        except:
+            if self.debug.get():
+                raise
+            else:
+                pass
+        finally:
+            self._plugui.is_active = True
 
     def spawn_ui_menubar(self):
         """
@@ -317,6 +386,7 @@ class MainPanelUI(object):
         self.frame3 = tk.LabelFrame(self.root, text="Plugin configuration",
                 relief=tk.RIDGE, width=self.frame1.winfo_width(),
                 height=self.frame1.winfo_height())
+        self.frame3.grid_propagate(0)
         self.frame3.grid(row=0, column=2, sticky='nesw')
 
     def spawn_ui_frame4(self):

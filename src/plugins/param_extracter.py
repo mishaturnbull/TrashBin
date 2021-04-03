@@ -26,12 +26,12 @@ class ParamExtractPlugin(pluginbase.TrashBinPlugin):
         """
         Create an instance of the param extracter plugin.
         """
-        super().__init__(self, handler)
+        super().__init__(handler)
         self.infilename = None
         self.outfilename = None
-        self.multivalhandle = None
-        self.paramfilter = None
-        self.force_output = False
+        self.multivalhandle = tk.IntVar()
+        self.paramfilter = tk.StringVar()
+        self.force_output = tk.BooleanVar()
     
     def run_filename(self, filename):
         self.infilename = filename
@@ -51,10 +51,29 @@ class ParamExtractPlugin(pluginbase.TrashBinPlugin):
             )
 
     def start_ui(self, frame):
-        pass
+        self.mvselframe = tk.LabelFrame(frame, text="Param Duplication",
+                relief=tk.RIDGE)
+        rb_first = tk.Radiobutton(self.mvselframe, text="First occurance",
+                variable=self.multivalhandle,
+                value=extract_params.MULTIVAL_FIRST,
+            )
+        rb_last = tk.Radiobutton(self.mvselframe, text="Last occurance",
+                variable=self.multivalhandle,
+                value=extract_params.MULTIVAL_LAST,
+            )
+        rb_fail = tk.Radiobutton(self.mvselframe, text="Abort",
+                variable=self.multivalhandle,
+                value=extract_params.MULTIVAL_FAIL,
+            )
+        rb_first.grid(row=0, column=0, sticky='nw')
+        rb_last.grid(row=1, column=0, sticky='nw')
+        rb_fail.grid(row=2, column=0, sticky='nw')
+        self.mvselframe.grid(row=0, column=0, sticky='nw')
+        frame.update()
+        print("Done start_ui")
 
     def stop_ui(self, frame):
-        pass
+        self.mvselframe.destroy()
 
     def cleanup_and_exit(self):
         pass

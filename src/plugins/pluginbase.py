@@ -10,16 +10,6 @@ before use.
 
 import uuid
 
-def _mark_for_override_detection(method):
-    method._is_original = True
-    return method
-
-def _check_overriden(method):
-    if hasattr(method, '_is_original'):
-        return not bool(method._is_original)
-    return False
-
-
 class TrashBinPlugin(object):
     """
     Base class for a TrashBin plugin.
@@ -43,41 +33,28 @@ class TrashBinPlugin(object):
         self.is_active = False
         self.handler = handler
 
-        self._check_necessary_overrides()
+    @property
+    def uuid(self):
+        return str(self._uuid)
 
-    def _check_necessary_overrides(self):
-        for function in self._must_be_overriden:
-            assert _check_overriden(function), \
-                    "Method {} must be overriden!".format(function.__name__)
-
-    @_mark_for_override_detection
     def start_ui(self, frame):
-        pass
-    _must_be_overriden.append(start_ui)
+        raise NotImplemented("Method start_ui must be overriden!")
 
-    @_mark_for_override_detection
     def stop_ui(self, frame):
-        pass
-    _must_be_overriden.append(stop_ui)
+        raise NotImplemented("Method stop_ui must be overriden!")
 
-    @_mark_for_override_detection
     def cleanup_and_exit(self):
-        pass
-    _must_be_overriden.append(cleanup_and_exit)
+        raise NotImplemented("Method cleanup_and_exit must be overriden!")
 
-    @_mark_for_override_detection
     def run_filename(self, filename):
         pass
 
-    @_mark_for_override_detection
     def run_filehandle(self, filehandle):
         pass
 
-    @_mark_for_override_detection
     def run_parsedlog(self, dflog):
         pass
 
-    @_mark_for_override_detection
     def run_messages(self, messages):
         pass
 
