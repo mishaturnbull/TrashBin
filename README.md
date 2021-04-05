@@ -14,5 +14,7 @@ privacy policies - e.g. GPS.\*, GPA.\*, PARAM messages, and others.
 ## Acknowledgements
 
 This code makes use of the DFReader.py file found in `pymavlink`.  `pymavlink`
-is licensed under the LGPL v3.  Thanks to all who contributed to it!
+is licensed under the LGPL v3.  DFReader.py can be found under the src/ folder,
+and has been modified slightly (see commit history).  Thanks to all who
+contributed to it!
 
