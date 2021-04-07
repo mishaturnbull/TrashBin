@@ -34,7 +34,7 @@ def find_plugins_dir(startdir='.'):
     startlist = os.listdir(startdir)
     if '.git' in startlist:
         # we're in top level folder
-        return 'src/plugins'
+        return os.path.join('src', 'plugins')
     elif 'plugins' in startlist:
         # we're in the src folder
         return 'plugins'
@@ -44,7 +44,7 @@ def find_plugins_dir(startdir='.'):
     elif 'TrashBin' in startlist:
         # we're above the module --- won't something else break here??
         # well, it won't be this function
-        return 'TrashBin/src/plugins'
+        return os.path.join('TrashBin', 'src', 'plugins')
     else:
         # ok, no idea where we are, and not much chance of finding out
         raise FileNotFoundError("I can't find the plugin directory!")
@@ -89,6 +89,8 @@ def module_list():
     for plugin in wanted_file_list():
         filename = os.path.join(find_plugins_dir(), plugin)[:-3]
         modname = filename.replace('/', '.')
+        # maintain windows compat, also replace backslashes with dots
+        modname = modname.replace('\\', '.')
         modules.append(importlib.import_module(modname))
     return modules
 
