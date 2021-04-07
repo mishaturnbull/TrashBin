@@ -89,6 +89,8 @@ def module_list():
     for plugin in wanted_file_list():
         filename = os.path.join(find_plugins_dir(), plugin)[:-3]
         modname = filename.replace('/', '.')
+        # maintain windows compat, also replace backslashes with dots
+        modname = modname.replace('\\', '.')
         modules.append(importlib.import_module(modname))
     return modules
 
