@@ -27,7 +27,7 @@ class MainPanelUI(object):
     """
 
     def __init__(self):
-        self.available_plugins = []
+        self.available_factories = []
         self.root = tk.Tk()
         self.debug = tk.BooleanVar()
         self.debug.set(False)
@@ -49,20 +49,20 @@ class MainPanelUI(object):
             return []
 
     @property
-    def plugin_classes(self):
+    def factory_classes(self):
         try:
             l = list(self.ui_pluglistbox.get(0, tk.END))
         except AttributeError:
             # it doesn't exist yet, or is empty...
             return []
-        # the box only stores the string name, not the actual plugin.  we have
-        # to correlate that back to the actual plugin object here
-        plugins = []
+        # the box only stores the string name, not the actual factory.  we have
+        # to correlate that back to the actual factory object here
+        factories = []
         for pname in l:
-            for availplug in self.available_plugins:
+            for availplug in self.available_factories:
                 if availplug.plugin_name == pname:
-                    plugins.append(availplug)
-        return plugins
+                    factories.append(availplug)
+        return factories
 
     @property
     def factories(self):
@@ -128,42 +128,45 @@ class MainPanelUI(object):
 
     def cb_add_plugs(self):
         """
-        Callback to load plugin(s) from the available plugin list.
-        Plugin list is provided by the plugin manager.
+        Callback to load factory(s) from the available plugin list.
+        Plugin list is provided by the factory manager.
         """
-        self.available_plugins = _pad.plugin_list()[1]
-        plp = pluginloader.PluginLoaderPanel(self, self.available_plugins)
+        self.available_factories = _pad.plugin_list()[1]
+        plp = pluginloader.PluginLoaderPanel(self, self.available_factories)
 
     def cb_rm_plugs(self):
         """
-        Callback to remove selected plugin(s) from the input list.
+        Callback to remove selected factory(s) from the input list.
         """
         selected = self.ui_pluglistbox.curselection()
         for i in selected[::-1]:
             self.ui_pluglistbox.delete(i)
         self.ui_pluglistbox.selection_clear(0, tk.END)
         # now that selection has been cleared, invoke the selected cb to
-        # remove UI elements and cleanup the plugin
+        # remove UI elements and cleanup the factory
         self.cb_plugselect(None)
+        # now we need to find and remove that one from the factory map
+
 
     def cb_rm_all_plugs(self):
         """
-        Callback to remove all currently listed plugins.
+        Callback to remove all currently listed factories.
         """
-        if len(self.plugins) >= 5:
+        if len(self.factories) >= 5:
             res = tkmb.askyesno("Remove All", "Are you sure you want to " \
                     "unload all plugins?")
             if not res:
                 # they said no
                 return
         self.ui_pluglistbox.selection_clear(0, tk.END)
-        for i in range(len(self.plugins))[::-1]:
+        for i in range(len(self.factories))[::-1]:
             self.ui_pluglistbox.delete(i)
             self.cb_plugselect(None)
+        self.factmap = {}
 
     def cb_plug_up(self):
         """
-        Callback to move a plugin up the chain.
+        Callback to move a factory up the chain.
         """
         idx = self.ui_pluglistbox.curselection()[0]
         # check if we're at the top (or the only one)
@@ -177,11 +180,11 @@ class MainPanelUI(object):
 
     def cb_plug_dn(self):
         """
-        Callback to move a plugin down the chain.
+        Callback to move a factory down the chain.
         """
         idx = self.ui_pluglistbox.curselection()[0]
         # are we at the bottom
-        if idx == len(self.plugins) - 1:
+        if idx == len(self.factories) - 1:
             return
         item = self.ui_pluglistbox.get(idx)
         self.ui_pluglistbox.delete(idx)
@@ -210,7 +213,7 @@ class MainPanelUI(object):
 
     def cb_plugselect(self, event):
         """
-        Callback for what do when a plugin is selected.
+        Callback for what do when a factory is selected.
         """
         try:
             idx = self.ui_pluglistbox.curselection()[0]
@@ -229,18 +232,18 @@ class MainPanelUI(object):
             finally:
                 self._plugui.is_active = False
         self._plugui = None
-        # ok, old plugin ui is out of the way now
+        # ok, old factory ui is out of the way now
         # check if anything is actually selected
         if idx is None:
             # nope, get outta here
             return
         plugname = self.ui_pluglistbox.get(idx)
-        # load the real plugin - have to search through our .factmap dict
+        # load the real factory - have to search through our .factmap dict
         for key, val in self.factmap.items():
             if val.plugin_name == plugname:
                 self._plugui = val
                 break
-        # mark as active & setup new plugin UI!
+        # mark as active & setup new factory UI!
         try:
             self._plugui.start_ui(self.frame3)
         except:
