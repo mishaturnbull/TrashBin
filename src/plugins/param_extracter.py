@@ -57,11 +57,35 @@ class ParamExtractFactory(pluginbase.TBPluginFactory):
         rb_last.grid(row=1, column=0, sticky='nw')
         rb_fail.grid(row=2, column=0, sticky='nw')
         self.mvselframe.grid(row=0, column=0, sticky='nw')
+
+        self.forcebox = tk.Checkbutton(frame, text='Force output',
+                variable=self.force_output, onvalue=True, offvalue=False)
+        self.forcebox.grid(row=0, column=1, sticky='nw')
+
+        self.filterframe = tk.Frame(frame)
+        tk.Label(self.filterframe, text="Parameter name filter").grid(
+                row=0, column=0, sticky='nw')
+        tk.Label(self.filterframe, text="Enter as a multi-line regex").grid(
+                row=1, column=0, sticky='nw')
+        filterbox = tk.Entry(self.filterframe, 
+                textvariable=self.paramfilter)
+        filterbox.grid(row=2, column=0, sticky='nesw')
+        self.filterframe.grid(row=3, column=0, columnspan=2, sticky='nesw')
+        self.filterframe.grid_rowconfigure(2, weight=1)
+        self.filterframe.grid_columnconfigure(0, weight=1)
+        self.filterframe.grid_propagate(0)
+        frame.grid_rowconfigure(3, weight=1)
+        frame.grid_columnconfigure(0, weight=1)
+
         frame.update()
         print("Done start_ui")
 
     def stop_ui(self, frame):
         self.mvselframe.destroy()
+        self.forcebox.destroy()
+        self.filterframe.destroy()
+        frame.grid_rowconfigure(3, weight=0)
+        frame.grid_columnconfigure(0, weight=0)
 
     def cleanup_and_exit(self):
         pass
