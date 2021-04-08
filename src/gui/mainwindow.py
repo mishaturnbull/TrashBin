@@ -34,7 +34,7 @@ class MainPanelUI(object):
         self.pbar_var = tk.IntVar()
         self.pbar_var.set(0)
         self._plugui = None
-        self.plugmap = {}
+        self.factmap = {}
 
         self.spawn_ui()
         self.processor = singlethread.SingleThreadProcessor(self)
@@ -65,8 +65,8 @@ class MainPanelUI(object):
         return plugins
 
     @property
-    def plugins(self):
-        return self.plugmap.values()
+    def factories(self):
+        return self.factmap.values()
 
     def spawn_ui(self):
         self.root.title("TrashBin Log Utility")
@@ -131,7 +131,7 @@ class MainPanelUI(object):
         Callback to load plugin(s) from the available plugin list.
         Plugin list is provided by the plugin manager.
         """
-        self.available_plugins = _pad.plugin_list()
+        self.available_plugins = _pad.plugin_list()[1]
         plp = pluginloader.PluginLoaderPanel(self, self.available_plugins)
 
     def cb_rm_plugs(self):
@@ -235,8 +235,8 @@ class MainPanelUI(object):
             # nope, get outta here
             return
         plugname = self.ui_pluglistbox.get(idx)
-        # load the real plugin - have to search through our .plugmap dict
-        for key, val in self.plugmap.items():
+        # load the real plugin - have to search through our .factmap dict
+        for key, val in self.factmap.items():
             if val.plugin_name == plugname:
                 self._plugui = val
                 break
@@ -250,6 +250,9 @@ class MainPanelUI(object):
                 pass
         finally:
             self._plugui.is_active = True
+
+    def notify_work_done(self, amt=1):
+        self.pbar_var.set(self.pbar_var.get() + amt)
 
     def spawn_ui_menubar(self):
         """

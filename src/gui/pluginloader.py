@@ -22,7 +22,7 @@ class PluginLoaderPanel(object):
         for i in selected:
             plugin = self.plugins_available[i]
             instance = plugin(self.parent)
-            self.parent.plugmap.update({instance.uuid: instance})
+            self.parent.factmap.update({instance.uuid: instance})
             self.parent.ui_pluglistbox.insert(tk.END, plugin.plugin_name)
 
     def cb_describe(self, event):
@@ -59,6 +59,7 @@ class PluginLoaderPanel(object):
         self.pluginselbox.bind("<<ListboxSelect>>", self.cb_describe)
 
         # populate the plugin list
+        print(self.plugins_available)
         for plugin in self.plugins_available:
             print(plugin)
             self.pluginselbox.insert(tk.END, plugin.plugin_name)
