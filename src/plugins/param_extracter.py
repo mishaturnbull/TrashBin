@@ -76,6 +76,7 @@ class ParamExtractFactory(pluginbase.TBPluginFactory):
         self.filterframe.grid_propagate(0)
         frame.grid_rowconfigure(3, weight=1)
         frame.grid_columnconfigure(0, weight=1)
+        frame.grid_columnconfigure(1, weight=1)
 
         frame.update()
         print("Done start_ui")
@@ -86,6 +87,7 @@ class ParamExtractFactory(pluginbase.TBPluginFactory):
         self.filterframe.destroy()
         frame.grid_rowconfigure(3, weight=0)
         frame.grid_columnconfigure(0, weight=0)
+        frame.grid_columnconfigure(1, weight=0)
 
     def cleanup_and_exit(self):
         pass
