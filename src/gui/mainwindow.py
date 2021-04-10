@@ -148,7 +148,8 @@ class MainPanelUI(object):
         # remove UI elements and cleanup the factory
         self.cb_plugselect(None)
         # now we need to find and remove that one from the factory map
-        
+        targ = list(self.factmap.keys())[i]
+        self.factmap = {k:v for k, v in self.factmap.items() if k != targ}
 
     def cb_rm_all_plugs(self):
         """
@@ -203,7 +204,6 @@ class MainPanelUI(object):
             self.processor.reinit()
             self.pbar['maximum'] = self.processor.max_work
             self.pbar_var.set(0)
-            time.sleep(1)
             self.btn_go.config(text="Stop")
             self.processor.active = True
             self.processor.run()
