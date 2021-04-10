@@ -146,7 +146,7 @@ class MainPanelUI(object):
         # remove UI elements and cleanup the factory
         self.cb_plugselect(None)
         # now we need to find and remove that one from the factory map
-
+        
 
     def cb_rm_all_plugs(self):
         """
