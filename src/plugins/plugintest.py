@@ -6,6 +6,7 @@ Test GUI plugin for debug purposes
 """
 
 import random
+import time
 import tkinter as tk
 import tkinter.ttk as ttk
 import src.plugins.pluginbase as pluginbase
@@ -61,18 +62,22 @@ class TestPlugin(pluginbase.TrashBinPlugin):
     def run_filename(self, filename):
         print("Plugin test: in run_filename: {}".format(filename))
         self.handler.notify_work_done(self.work_per_file / 4)
+        time.sleep(0.5)
 
     def run_filehandle(self, filehandle):
         print("Plugin test: in run_filehandle: {}".format(filehandle))
         self.handler.notify_work_done(self.work_per_file / 4)
+        time.sleep(0.5)
 
     def run_parsedlog(self, dflog):
         print("Plugin test: in run_parsedlog: {}".format(dflog))
         self.handler.notify_work_done(self.work_per_file / 4)
+        time.sleep(0.5)
 
     def run_messages(self, messages):
         print("Plugin test: in run_messages with len {}".format(len(messages)))
         self.handler.notify_work_done(self.work_per_file / 4)
+        time.sleep(0.5)
 
     def cleanup_and_exit(self):
         # nothing to do here!

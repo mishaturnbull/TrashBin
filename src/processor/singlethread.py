@@ -66,6 +66,7 @@ class Worker(object):
         print("In child.run")
         for filename in self.filenames:
             self.process_one_log(filename)
+        self.handler.notify_done()
 
 class SingleThreadProcessor(pb.ProcessorBase):
     """
@@ -83,6 +84,12 @@ class SingleThreadProcessor(pb.ProcessorBase):
         self.process = threading.Thread(
                 target=self.worker.run,
                 args=(),
+            )
+
+    def reinit(self):
+        self.process = threading.Thread(
+                target=self.worker.run,
+                args=()
             )
 
     def run(self):

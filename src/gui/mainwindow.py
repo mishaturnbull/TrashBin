@@ -12,6 +12,7 @@ import tkinter.filedialog as tkfd
 import tkinter.messagebox as tkmb
 from tkinter import ttk
 import os
+import time
 import src.logutils.DFReader as dfr
 import src.plugins._plugin_autodetect as _pad
 import src.gui.pluginloader as pluginloader
@@ -46,6 +47,7 @@ class MainPanelUI(object):
             return list(self.ui_filelistbox.get(0, tk.END))
         except AttributeError:
             # ui_filelistbox doesn't exist yet
+            raise
             return []
 
     @property
@@ -197,19 +199,20 @@ class MainPanelUI(object):
         """
         if not self.processor.active:
             # start
+            self.processor.update()
+            self.processor.reinit()
             self.pbar['maximum'] = self.processor.max_work
             self.pbar_var.set(0)
+            time.sleep(1)
             self.btn_go.config(text="Stop")
-            self.processor.update()
             self.processor.active = True
-            print("About to start")
             self.processor.run()
-            print("Started")
         else:
             # inactive
             self.processor.stop()
             self.btn_go.config(text="Start")
             self.processor.active = False
+            self.pbar_var.set(0)
 
     def cb_plugselect(self, event):
         """
@@ -256,6 +259,10 @@ class MainPanelUI(object):
 
     def notify_work_done(self, amt=1):
         self.pbar_var.set(self.pbar_var.get() + amt)
+
+    def notify_done(self):
+        self.btn_go.config(text="Done! (Click to restart)")
+        self.processor.active = False
 
     def spawn_ui_menubar(self):
         """

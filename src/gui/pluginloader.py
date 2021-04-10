@@ -59,9 +59,7 @@ class PluginLoaderPanel(object):
         self.pluginselbox.bind("<<ListboxSelect>>", self.cb_describe)
 
         # populate the plugin list
-        print(self.plugins_available)
         for plugin in self.plugins_available:
-            print(plugin)
             self.pluginselbox.insert(tk.END, plugin.plugin_name)
 
         # plugin details box

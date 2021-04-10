@@ -26,7 +26,8 @@ class ProcessorBase(object):
     @property
     def max_work(self):
         per_file = sum([f.work_per_file for f in self.factories])
-        return per_file * len(self.input_files)
+        total = per_file * len(self.input_files)
+        return total
 
     def run(self):
         raise NotImplemented("Method run must be overriden!")
@@ -36,4 +37,7 @@ class ProcessorBase(object):
 
     def force_stop(self):
         raise NotImplemented("Method force_stop must be overriden!")
+
+    def notify_done(self):
+        self.handler.notify_done()
 
