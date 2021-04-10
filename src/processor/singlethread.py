@@ -18,26 +18,21 @@ class Worker(object):
 
     def stage_filename(self, filename, plugins):
         for plugin in plugins:
-            print("filename: {}, {}".format(plugin, filename))
             plugin.run_filename(filename)
 
     def stage_filehandle(self, handle, plugins):
         for plugin in plugins:
-            print("filehandle: {}, {}".format(plugin, handle))
             plugin.run_filehandle(handle)
 
     def stage_parsedlog(self, dfl, plugins):
         for plugin in plugins:
-            print("parsedlog: {}, {}".format(plugin, dfl))
             plugin.run_parsedlog(dfl)
 
     def stage_messages(self, msgs, plugins):
         for plugin in plugins:
-            print("messages: {}".format(plugin))
             plugin.run_messages(msgs)
 
     def process_one_log(self, filename):
-        print("in child.proc_one_log({})".format(filename))
         # first, spawn new plugins for it all
         plugs = []
         for factory in self.factories:
@@ -58,12 +53,10 @@ class Worker(object):
             if m is None:
                 break
         self.stage_messages(dfl.all_messages, plugs)
-        print("Done with that file")
 
     def run(self):
         self.filenames = self.handler.input_files
         self.factories = self.handler.factories
-        print("In child.run")
         for filename in self.filenames:
             self.process_one_log(filename)
         self.handler.notify_done()
@@ -93,7 +86,6 @@ class SingleThreadProcessor(pb.ProcessorBase):
             )
 
     def run(self):
-        print("About to hit process.start")
         self.process.start()
 
     def stop(self):
