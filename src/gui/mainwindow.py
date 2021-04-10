@@ -12,6 +12,7 @@ import tkinter.filedialog as tkfd
 import tkinter.messagebox as tkmb
 from tkinter import ttk
 import os
+import time
 import src.logutils.DFReader as dfr
 import src.plugins._plugin_autodetect as _pad
 import src.gui.pluginloader as pluginloader
@@ -27,14 +28,14 @@ class MainPanelUI(object):
     """
 
     def __init__(self):
-        self.available_plugins = []
+        self.available_factories = []
         self.root = tk.Tk()
         self.debug = tk.BooleanVar()
         self.debug.set(False)
         self.pbar_var = tk.IntVar()
         self.pbar_var.set(0)
         self._plugui = None
-        self.plugmap = {}
+        self.factmap = {}
 
         self.spawn_ui()
         self.processor = singlethread.SingleThreadProcessor(self)
@@ -46,27 +47,28 @@ class MainPanelUI(object):
             return list(self.ui_filelistbox.get(0, tk.END))
         except AttributeError:
             # ui_filelistbox doesn't exist yet
+            raise
             return []
 
     @property
-    def plugin_classes(self):
+    def factory_classes(self):
         try:
             l = list(self.ui_pluglistbox.get(0, tk.END))
         except AttributeError:
             # it doesn't exist yet, or is empty...
             return []
-        # the box only stores the string name, not the actual plugin.  we have
-        # to correlate that back to the actual plugin object here
-        plugins = []
+        # the box only stores the string name, not the actual factory.  we have
+        # to correlate that back to the actual factory object here
+        factories = []
         for pname in l:
-            for availplug in self.available_plugins:
+            for availplug in self.available_factories:
                 if availplug.plugin_name == pname:
-                    plugins.append(availplug)
-        return plugins
+                    factories.append(availplug)
+        return factories
 
     @property
-    def plugins(self):
-        return self.plugmap.values()
+    def factories(self):
+        return self.factmap.values()
 
     def spawn_ui(self):
         self.root.title("TrashBin Log Utility")
@@ -128,42 +130,46 @@ class MainPanelUI(object):
 
     def cb_add_plugs(self):
         """
-        Callback to load plugin(s) from the available plugin list.
-        Plugin list is provided by the plugin manager.
+        Callback to load factory(s) from the available plugin list.
+        Plugin list is provided by the factory manager.
         """
-        self.available_plugins = _pad.plugin_list()
-        plp = pluginloader.PluginLoaderPanel(self, self.available_plugins)
+        self.available_factories = _pad.plugin_list()[1]
+        plp = pluginloader.PluginLoaderPanel(self, self.available_factories)
 
     def cb_rm_plugs(self):
         """
-        Callback to remove selected plugin(s) from the input list.
+        Callback to remove selected factory(s) from the input list.
         """
         selected = self.ui_pluglistbox.curselection()
         for i in selected[::-1]:
             self.ui_pluglistbox.delete(i)
         self.ui_pluglistbox.selection_clear(0, tk.END)
         # now that selection has been cleared, invoke the selected cb to
-        # remove UI elements and cleanup the plugin
+        # remove UI elements and cleanup the factory
         self.cb_plugselect(None)
+        # now we need to find and remove that one from the factory map
+        targ = list(self.factmap.keys())[i]
+        self.factmap = {k:v for k, v in self.factmap.items() if k != targ}
 
     def cb_rm_all_plugs(self):
         """
-        Callback to remove all currently listed plugins.
+        Callback to remove all currently listed factories.
         """
-        if len(self.plugins) >= 5:
+        if len(self.factories) >= 5:
             res = tkmb.askyesno("Remove All", "Are you sure you want to " \
                     "unload all plugins?")
             if not res:
                 # they said no
                 return
         self.ui_pluglistbox.selection_clear(0, tk.END)
-        for i in range(len(self.plugins))[::-1]:
+        for i in range(len(self.factories))[::-1]:
             self.ui_pluglistbox.delete(i)
             self.cb_plugselect(None)
+        self.factmap = {}
 
     def cb_plug_up(self):
         """
-        Callback to move a plugin up the chain.
+        Callback to move a factory up the chain.
         """
         idx = self.ui_pluglistbox.curselection()[0]
         # check if we're at the top (or the only one)
@@ -177,11 +183,11 @@ class MainPanelUI(object):
 
     def cb_plug_dn(self):
         """
-        Callback to move a plugin down the chain.
+        Callback to move a factory down the chain.
         """
         idx = self.ui_pluglistbox.curselection()[0]
         # are we at the bottom
-        if idx == len(self.plugins) - 1:
+        if idx == len(self.factories) - 1:
             return
         item = self.ui_pluglistbox.get(idx)
         self.ui_pluglistbox.delete(idx)
@@ -194,23 +200,23 @@ class MainPanelUI(object):
         """
         if not self.processor.active:
             # start
+            self.processor.update()
+            self.processor.reinit()
             self.pbar['maximum'] = self.processor.max_work
             self.pbar_var.set(0)
             self.btn_go.config(text="Stop")
-            self.processor.update()
             self.processor.active = True
-            print("About to start")
             self.processor.run()
-            print("Started")
         else:
             # inactive
             self.processor.stop()
             self.btn_go.config(text="Start")
             self.processor.active = False
+            self.pbar_var.set(0)
 
     def cb_plugselect(self, event):
         """
-        Callback for what do when a plugin is selected.
+        Callback for what do when a factory is selected.
         """
         try:
             idx = self.ui_pluglistbox.curselection()[0]
@@ -229,18 +235,18 @@ class MainPanelUI(object):
             finally:
                 self._plugui.is_active = False
         self._plugui = None
-        # ok, old plugin ui is out of the way now
+        # ok, old factory ui is out of the way now
         # check if anything is actually selected
         if idx is None:
             # nope, get outta here
             return
         plugname = self.ui_pluglistbox.get(idx)
-        # load the real plugin - have to search through our .plugmap dict
-        for key, val in self.plugmap.items():
+        # load the real factory - have to search through our .factmap dict
+        for key, val in self.factmap.items():
             if val.plugin_name == plugname:
                 self._plugui = val
                 break
-        # mark as active & setup new plugin UI!
+        # mark as active & setup new factory UI!
         try:
             self._plugui.start_ui(self.frame3)
         except:
@@ -250,6 +256,13 @@ class MainPanelUI(object):
                 pass
         finally:
             self._plugui.is_active = True
+
+    def notify_work_done(self, amt=1):
+        self.pbar_var.set(self.pbar_var.get() + amt)
+
+    def notify_done(self):
+        self.btn_go.config(text="Done! (Click to restart)")
+        self.processor.active = False
 
     def spawn_ui_menubar(self):
         """

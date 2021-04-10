@@ -1,68 +1,65 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import multiprocessing
+import threading
 import src.logutils.DFReader as dfr
 import src.processor.processorbase as pb
 
 
 class Worker(object):
     """
-    Handles actual processing of the plugins.
+    This class does the actual heavy lifting in another thread.
+
+    Due to the GIL, and using threading instead of multiprocessing, it's not
+    all that much of a huge speedup, but it does keep the GUI from freezing.
     """
     def __init__(self, handler):
         self.handler = handler
-        self.do_abort = False
 
-    def pipeline_filename(self, filename):
-        for plugin in self.handler.plugins:
+    def stage_filename(self, filename, plugins):
+        for plugin in plugins:
             plugin.run_filename(filename)
-            self.handler.progress.set(self.handler.progress.get() + 1)
 
-    def pipeline_filehandle(self, filehandle):
-        for plugin in self.handler.plugins:
-            plugin.run_filehandle(filehandle)
-            self.handler.progress.set(self.handler.progress.get() + 1)
+    def stage_filehandle(self, handle, plugins):
+        for plugin in plugins:
+            plugin.run_filehandle(handle)
 
-    def pipeline_parsedlog(self, parsedlog):
-        for plugin in self.handler.plugins:
-            plugin.run_parsedlog(parsedlog)
-            self.handler.progress.set(self.handler.progress.get() + 1)
+    def stage_parsedlog(self, dfl, plugins):
+        for plugin in plugins:
+            plugin.run_parsedlog(dfl)
 
-    def pipeline_messages(self, messages):
-        for plugin in self.handler.plugins:
-            plugin.run_messages(messages)
-            self.handler.progress.set(self.handler.progress.get() + 1)
+    def stage_messages(self, msgs, plugins):
+        for plugin in plugins:
+            plugin.run_messages(msgs)
+
+    def process_one_log(self, filename):
+        # first, spawn new plugins for it all
+        plugs = []
+        for factory in self.factories:
+            plugs.append(factory.give_plugin())
+
+        # now, run through the processing pipeline
+        self.stage_filename(filename, plugs)
+
+        with open(filename, 'r') as filehandle:
+            self.stage_filehandle(filehandle, plugs)
+
+        dfl = dfr.DFReader_auto(filename)
+        self.stage_parsedlog(dfl, plugs)
+
+        # have to process all the messages now
+        while True:
+            m = dfl.recv_msg()
+            if m is None:
+                break
+        self.stage_messages(dfl.all_messages, plugs)
 
     def run(self):
-        """
-        Main callable item for worker thread.
-        """
-        print("Started main execution loop")
-        print("Input files: {}".format(self.handler.input_files))
-        print("Plugins: {}".format(self.handler.plugins))
-        for filename in self.handler.input_files:
-            print("On {}".format(filename))
-            if self.do_abort:
-                break
-            self.pipeline_filename(filename)
-            print("Done filename pipeline")
-            with open(filename, 'r') as filehandle:
-                self.pipeline_filehandle(filehandle)
-            print("Done filehandle pipeline")
-            parsedlog = dfr.DFReader_auto(filename)
-            self.pipeline_parsedlog(parsedlog)
-            print("Done parsedlog pipeline")
-            
-            # process messages into one big list
-            # rip RAM :(
-            while True:
-                m = parsedlog.recv_msg()
-                if m is None:
-                    break
-            self.pipeline_messages(parsedlog.all_messages)
-            print("Done messages pipeline")
-
+        self.filenames = self.handler.input_files
+        self.factories = self.handler.factories
+        for filename in self.filenames:
+            self.process_one_log(filename)
+        self.handler.notify_done()
 
 class SingleThreadProcessor(pb.ProcessorBase):
     """
@@ -77,19 +74,18 @@ class SingleThreadProcessor(pb.ProcessorBase):
     def __init__(self, handler):
         super().__init__(handler)
         self.worker = Worker(self)
-        self.process = multiprocessing.Process(
+        self.process = threading.Thread(
                 target=self.worker.run,
                 args=(),
             )
-        
-    @property
-    def max_work(self):
-        # the *4 at the end is due to each plugin having 4 stages in its
-        # operation pipeline -- filename, handle, parse, and messages
-        return len(self.input_files) * len(self.plugins) * 4
+
+    def reinit(self):
+        self.process = threading.Thread(
+                target=self.worker.run,
+                args=()
+            )
 
     def run(self):
-        print("About to hit process.start")
         self.process.start()
 
     def stop(self):
