@@ -43,3 +43,33 @@ def filter_packet_type(log, msgtypes=[]):
 
     return (matching, not_matching)
 
+def filter_data_type(messages, msgfilter='.*', replace=0, reverse=True):
+    """
+    Given a list of messages (i.e. DFReader_auto.all_messages), and a
+    filters to apply, if data matches the filter, then it is replaced with the
+    'replace' value.  Dictionaries are joined together case-sensitive with a .
+
+    If the filter matches, the data is replaced.  A list of altered MAVLink
+    message objects is returned.
+    """
+
+    new_msgs = []
+    reobj = re.compile(msgfilter)
+
+    for msg in messages:
+        if msg is None:
+            break  # at the end
+        d = msg.to_dict()
+        prefix = d.pop('mavpackettype')
+        for key in list(d.keys()):
+            checkstr = '.'.join([prefix, key])
+            if reobj.match(checkstr) and (not reverse):
+                d[key] = replace
+            elif (not reobj.match(checkstr)) and (reverse):
+                d[key] = replace
+        # data is updated, have to replace mavpackettype
+        d.update({'mavpackettype': prefix})
+        new_msgs.append(msg)
+
+    return new_msgs
+

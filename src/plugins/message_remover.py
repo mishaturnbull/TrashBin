@@ -10,6 +10,7 @@ import tkinter as tk
 import tkinter.ttk as ttk
 import src.plugins.pluginbase as pluginbase
 import src.logutils.message_remover as message_remover
+import src.logutils.DFWriter as dfwriter
 
 
 class MessageRemoverFactory(pluginbase.TBPluginFactory):
@@ -79,5 +80,50 @@ class MessageRemoverFactory(pluginbase.TBPluginFactory):
         pass
 
     def give_plugin(self):
-        pass
+        plug = MessageRemoverPlugin(
+                self,
+                whitelist=self.whitelist.get(),
+                msgfilter=self.filter.get(),
+                forceoutput=False,
+            )
+        return plug
+
+class MessageRemoverPlugin(pluginbase.TrashBinPlugin):
+    """
+    Does the actual work of parameter filtering.
+    """
+
+    total_work = 10
+
+    def __init__(self, handler, whitelist, msgfilter, forceoutput):
+        self.handler = handler
+        self.whitelist = whitelist
+        self.msgfilter = msgfilter
+        self.forceoutput = forceoutput
+        self.infilename = None
+        self.outfilename = None
+
+    def run_filename(self, filename):
+        self.infilename = filename
+        if self.outfilename is None:
+            self.outfilename = os.path.splitext(filename)[0] + '.tb.log'
+        self.handler.notify_work_done(1)
+
+    def run_messages(self, messages):
+        # parsing the messages is a decent task in itself
+        self.handler.notify_work_done(1)
+
+        new_msgs = message_remover.filter_data_type(
+                messages,
+                msgfilter=self.msgfilter,
+                replace=0,
+                reverse=self.whitelist,
+            )
+
+        # only one part left
+        self.handler.notify_work_done(7)
+
+        dfw = dfwriter.DFWriter_text(new_msgs, self.outfilename)
+
+        self.handler.notify_work_done(1)
 
