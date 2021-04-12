@@ -37,6 +37,7 @@ class Worker(object):
         plugs = []
         for factory in self.factories:
             plugs.append(factory.give_plugin(self))
+        self.plugins = plugs
 
         # now, run through the processing pipeline
         self.stage_filename(filename, plugs)

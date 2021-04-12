@@ -17,6 +17,7 @@ class ProcessorBase(object):
         """
         self.handler = handler
         self.active = False
+        self.plugins = []
         self.update()
 
     def update(self):
