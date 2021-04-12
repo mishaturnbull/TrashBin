@@ -7,7 +7,7 @@ Removes selected messages from a DFReader log.
 
 import re
 
-def filter_packet_type(log, msgtypes=[]):
+def filter_packet_type(messages, msgtypes=[]):
     """
     Given a DFReader (or DFReader derivative) object, filter out all the
     messages of given MAV packet types.
@@ -27,7 +27,7 @@ def filter_packet_type(log, msgtypes=[]):
     not_matching = []
     re_objects = [re.compile(s) for s in msgtypes]
 
-    for msg in log.all_messages:
+    for msg in messages:
         if msg is None:
             continue
         mtype = msg.to_dict()['mavpackettype']
