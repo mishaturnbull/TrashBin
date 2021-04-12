@@ -44,8 +44,8 @@ class PluginTestFactory(pluginbase.TBPluginFactory):
     def cleanup_and_exit(self):
         pass
 
-    def give_plugin(self):
-        plug = TestPlugin(self, self.work_per_file)
+    def give_plugin(self, processor=None):
+        plug = TestPlugin(self, processor, self.work_per_file)
         print("ParamTestFactory: giving new plugin {}".format(plug))
         return plug
 
@@ -55,8 +55,8 @@ class TestPlugin(pluginbase.TrashBinPlugin):
     Does the random test work.
     """
     
-    def __init__(self, handler, work_per_file):
-        self.handler = handler
+    def __init__(self, handler, processor, work_per_file):
+        super().__init__(handler, processor)
         self.work_per_file = work_per_file
     
     def run_filename(self, filename):
