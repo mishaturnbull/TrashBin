@@ -68,7 +68,7 @@ class TBPluginFactory(object):
     def cleanup_and_exit(self):
         raise NotImplemented("Method cleanup_and_exit must be overriden!")
 
-    def give_plugin(self):
+    def give_plugin(self, processor=None):
         raise NotImplemented("Method give_plugin must be overriden!")
 
     def notify_work_done(self, amt=1):
@@ -85,7 +85,7 @@ class TrashBinPlugin(object):
     """
     total_work = 0
 
-    def __init__(self, handler):
+    def __init__(self, handler, processor=None):
         """
         Create an instance of a TrashBin plugin object.
 
@@ -94,6 +94,7 @@ class TrashBinPlugin(object):
         """
         self._uuid = uuid.uuid4()
         self.handler = handler
+        self.processor = processor
 
     @property
     def uuid(self):
