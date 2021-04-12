@@ -7,7 +7,7 @@ Removes selected messages from a DFReader log.
 
 import re
 
-def filter_packet_type(log, msgtypes=[]):
+def filter_packet_type(messages, msgtypes=[]):
     """
     Given a DFReader (or DFReader derivative) object, filter out all the
     messages of given MAV packet types.
@@ -27,7 +27,7 @@ def filter_packet_type(log, msgtypes=[]):
     not_matching = []
     re_objects = [re.compile(s) for s in msgtypes]
 
-    for msg in log.all_messages:
+    for msg in messages:
         if msg is None:
             continue
         mtype = msg.to_dict()['mavpackettype']
@@ -42,4 +42,34 @@ def filter_packet_type(log, msgtypes=[]):
             not_matching.append(msg)
 
     return (matching, not_matching)
+
+def filter_data_type(messages, msgfilter='.*', replace=0, reverse=True):
+    """
+    Given a list of messages (i.e. DFReader_auto.all_messages), and a
+    filters to apply, if data matches the filter, then it is replaced with the
+    'replace' value.  Dictionaries are joined together case-sensitive with a .
+
+    If the filter matches, the data is replaced.  A list of altered MAVLink
+    message objects is returned.
+
+    **WARNING**:  This function operates in-place!  A copy of the messages list
+    is returned, but it's the same one that you give as an argument.
+    """
+
+    new_msgs = []
+    reobj = re.compile(msgfilter)
+
+    for msg in messages:
+        if msg is None:
+            break  # at the end
+        d = msg.to_dict()
+        prefix = d.pop('mavpackettype')
+        for key in list(d.keys()):
+            checkstr = '.'.join([prefix, key])
+            if reobj.match(checkstr) and (not reverse):
+                d[key] = replace
+            elif (not reobj.match(checkstr)) and (reverse):
+                d[key] = replace
+            msg.__setattr__(key, d[key])
+    return messages
 
