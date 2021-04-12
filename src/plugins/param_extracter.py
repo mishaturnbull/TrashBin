@@ -92,7 +92,7 @@ class ParamExtractFactory(pluginbase.TBPluginFactory):
     def cleanup_and_exit(self):
         pass
     
-    def give_plugin(self):
+    def give_plugin(self, processor=None):
         plug = ParamExtractPlugin(self,
                 self.multivalhandle.get(),
                 [self.paramfilter.get()],

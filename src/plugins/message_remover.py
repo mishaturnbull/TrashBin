@@ -123,9 +123,10 @@ class MessageRemoverFactory(pluginbase.TBPluginFactory):
     def cleanup_and_exit(self):
         pass
 
-    def give_plugin(self):
+    def give_plugin(self, processor=None):
         plug = MessageRemoverPlugin(
                 self,
+                processor,
                 whitelist=self.whitelist.get(),
                 nukemode=self.nukemode.get(),
                 replace=self.replace_val,
@@ -141,9 +142,9 @@ class MessageRemoverPlugin(pluginbase.TrashBinPlugin):
 
     total_work = 10
 
-    def __init__(self, handler, whitelist, nukemode, replace, msgfilter, 
+    def __init__(self, handler, proc, whitelist, nukemode, replace, msgfilter, 
             forceoutput):
-        super().__init__(handler)
+        super().__init__(handler, proc)
         self.whitelist = whitelist
         self.nukemode = nukemode
         self.replace = replace
