@@ -51,6 +51,9 @@ def filter_data_type(messages, msgfilter='.*', replace=0, reverse=True):
 
     If the filter matches, the data is replaced.  A list of altered MAVLink
     message objects is returned.
+
+    **WARNING**:  This function operates in-place!  A copy of the messages list
+    is returned, but it's the same one that you give as an argument.
     """
 
     new_msgs = []
@@ -67,9 +70,6 @@ def filter_data_type(messages, msgfilter='.*', replace=0, reverse=True):
                 d[key] = replace
             elif (not reobj.match(checkstr)) and (reverse):
                 d[key] = replace
-        # data is updated, have to replace mavpackettype
-        d.update({'mavpackettype': prefix})
-        new_msgs.append(msg)
-
-    return new_msgs
+            msg.__setattr__(key, d[key])
+    return messages
 

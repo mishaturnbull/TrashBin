@@ -128,7 +128,7 @@ class MessageRemoverFactory(pluginbase.TBPluginFactory):
                 self,
                 whitelist=self.whitelist.get(),
                 nukemode=self.nukemode.get(),
-                replace=self.replace.get(),
+                replace=self.replace_val,
                 msgfilter=self.filter.get(),
                 forceoutput=False,
             )
@@ -188,7 +188,7 @@ class MessageRemoverPlugin(pluginbase.TrashBinPlugin):
                 replace=self.replace,
                 reverse=self.whitelist,
             )
-        self.new = new_msgs
+        return new_msgs
 
     def output(self, new):
         dfw = dfwriter.DFWriter_text(new, self.outfilename)
