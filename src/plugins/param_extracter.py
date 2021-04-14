@@ -79,7 +79,6 @@ class ParamExtractFactory(pluginbase.TBPluginFactory):
         frame.grid_columnconfigure(1, weight=1)
 
         frame.update()
-        print("Done start_ui")
 
     def stop_ui(self, frame):
         self.mvselframe.destroy()

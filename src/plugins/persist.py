@@ -6,10 +6,8 @@ Classes & functions used in the saving and loading of .tbp and .tbpz files for
 plugin savestates.
 """
 
-import tkinter
 import json
 import zipfile
-
 import src.plugins._plugin_autodetect as _pad
 
 ZIP_INTERNAL_FILENAME = "data.tbp"
@@ -42,9 +40,7 @@ def write_text_file(filename, factories):
 def load_text_file(filename, handler):
     with open(filename, 'r') as infile:
         string = infile.read()
-    print(string)
     savestates = json.loads(string)
-    print(savestates)
     return load_all_savestates(savestates, handler)
 
 def write_zip_file(filename, factories):

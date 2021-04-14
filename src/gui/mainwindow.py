@@ -102,6 +102,7 @@ class MainPanelUI(object):
                 parent=self.root,
                 title="Load TrashBin Plugin Config",
                 filetypes=(
+                    ("TrashBin Plugin File", ".tbp .tbz"),
                     ("JSON text dump", "*.tbp"),
                     ("ZIP compressed dump", "*.tbz"),
                     ("all files", "*.*"),
@@ -111,7 +112,6 @@ class MainPanelUI(object):
             factories = persist.load_zip_file(filename, self)
         else:
             factories = persist.load_text_file(filename, self)
-        print("Loaded factories: {}".format(factories))
         for factory in factories:
             self.factmap.update({factory.uuid: factory})
             self.ui_pluglistbox.insert(tk.END, factory.plugin_name)
