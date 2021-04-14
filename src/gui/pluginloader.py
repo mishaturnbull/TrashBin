@@ -69,4 +69,5 @@ class PluginLoaderPanel(object):
         rightframe.grid(row=0, column=1)
         self.detailsbox = tk.Text(rightframe, height=21, width=40)
         self.detailsbox.grid(row=0, column=0, sticky='nesw')
+        self.detailsbox.insert('1.0', "Select a plugin to see more info")
 
