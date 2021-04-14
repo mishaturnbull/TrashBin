@@ -52,4 +52,10 @@ def write_zip_file(filename, factories):
         ziph.writestr(ZIP_INTERNAL_FILENAME,
             json.dumps(get_all_savestates(factories)))
 
+def load_zip_file(filename, handler):
+    with zipfile.ZipFile(filename, 'r') as ziph:
+        data = ziph.read(ZIP_INTERNAL_FILENAME)
+    savestates = json.loads(data)
+    return load_all_savestates(savestates, handler)
+
 
