@@ -120,6 +120,20 @@ class MessageRemoverFactory(pluginbase.TBPluginFactory):
         frame.grid_columnconfigure(0, weight=0)
         frame.update()
 
+    def export_savestate(self):
+        return {
+                'whitelist': self.whitelist.get(),
+                'nukemode': self.nukemode.get(),
+                'replace': self.replace.get(),
+                'filter': self.filter.get(),
+            }
+
+    def load_savestate(self, state):
+        self.whitelist.set(state['whitelist'])
+        self.nukemode.set(state['nukemode'])
+        self.replace.set(state['replace'])
+        self.filter.set(state['filter'])
+
     def cleanup_and_exit(self):
         pass
 

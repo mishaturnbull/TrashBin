@@ -13,6 +13,7 @@ import src.plugins.pluginbase as pb
 _KNOWN_FILES = [
         "_plugin_autodetect.py",
         "pluginbase.py",
+        "persist.py",
         "__init__.py",
         "__pycache__.py",
     ]
