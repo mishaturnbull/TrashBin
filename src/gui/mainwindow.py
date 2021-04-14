@@ -111,8 +111,10 @@ class MainPanelUI(object):
             factories = persist.load_zip_file(filename, self)
         else:
             factories = persist.load_text_file(filename, self)
+        print("Loaded factories: {}".format(factories))
         for factory in factories:
             self.factmap.update({factory.uuid: factory})
+            self.ui_pluglistbox.insert(tk.END, factory.plugin_name)
 
     def cb_procoptions(self):
         pass

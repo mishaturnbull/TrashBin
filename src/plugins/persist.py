@@ -44,6 +44,7 @@ def load_text_file(filename, handler):
         string = infile.read()
     print(string)
     savestates = json.loads(string)
+    print(savestates)
     return load_all_savestates(savestates, handler)
 
 def write_zip_file(filename, factories):
