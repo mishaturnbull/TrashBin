@@ -4,4 +4,6 @@ __pycache__/
 *.bin
 *.log
 *.param
+*.tbp
+*.tbz
 
