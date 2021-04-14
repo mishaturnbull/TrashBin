@@ -41,6 +41,14 @@ class PluginTestFactory(pluginbase.TBPluginFactory):
     def stop_ui(self, frame):
         self.iframe.delete()
 
+    def export_savestate(self):
+        return {
+                'work': self.work_per_file,
+            }
+
+    def load_savestate(self, state):
+        self._work_needed = state['work']
+
     def cleanup_and_exit(self):
         pass
 
