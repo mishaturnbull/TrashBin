@@ -89,6 +89,18 @@ class ParamExtractFactory(pluginbase.TBPluginFactory):
         frame.grid_columnconfigure(0, weight=0)
         frame.grid_columnconfigure(1, weight=0)
 
+    def export_savestate(self):
+        return {
+                'multivalhandle': self.multivalhandle.get(),
+                'paramfilter': self.paramfilter.get(),
+                'forceout': self.force_output.get(),
+            }
+
+    def load_savestate(self, state):
+        self.multivalhandle.set(state['multivalhandle'])
+        self.paramfilter.set(state['paramfilter'])
+        self.force_output.set(state['forceout'])
+
     def cleanup_and_exit(self):
         pass
     

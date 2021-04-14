@@ -15,6 +15,7 @@ import os
 import time
 import src.logutils.DFReader as dfr
 import src.plugins._plugin_autodetect as _pad
+import src.plugins.persist as persist
 import src.gui.pluginloader as pluginloader
 
 # the processor selection isn't as user-importable as plugins, we just import
@@ -82,10 +83,36 @@ class MainPanelUI(object):
         self.root.resizable(False, False)
 
     def cb_save_plugins(self):
-        pass
+        filename = tkfd.asksaveasfilename(
+                parent=self.root,
+                title="Save TrashBin Plugin Config",
+                filetypes=(
+                    ("JSON text dump", "*.tbp"),
+                    ("ZIP compressed dump", "*.tbz"),
+                    ("all files", "*.*"),
+                ),
+            )
+        if os.path.splitext(filename)[1].endswith('tbz'):
+            persist.write_zip_file(filename, list(self.factmap.values()))
+        else:
+            persist.write_text_file(filename, list(self.factmap.values()))
 
     def cb_load_plugins(self):
-        pass
+        filename = tkfd.askopenfilename(
+                parent=self.root,
+                title="Load TrashBin Plugin Config",
+                filetypes=(
+                    ("JSON text dump", "*.tbp"),
+                    ("ZIP compressed dump", "*.tbz"),
+                    ("all files", "*.*"),
+                ),
+            )
+        if os.path.splitext(filename)[1].endswith("tbz"):
+            factories = persist.load_zip_file(filename, self)
+        else:
+            factories = persist.load_text_file(filename, self)
+        for factory in factories:
+            self.factmap.update({factory.uuid: factory})
 
     def cb_procoptions(self):
         pass
@@ -94,6 +121,8 @@ class MainPanelUI(object):
         """
         Callback to add file(s) to our input file list.
         """
+        for a, b in self.factmap.items():
+            print(a, b.__dict__)
         newfiles = tkfd.askopenfilenames(
                 parent=self.root, title="Log selection",
                 filetypes=(("Binary logs", "*.bin"),("Text logs", "*.log"),
