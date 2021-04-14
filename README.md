@@ -6,10 +6,60 @@ brother of Mission Planner's log anonymizer feature.  This was written with
 the goal of being able to delete certain log packets entirely to comply with
 privacy policies - e.g. GPS.\*, GPA.\*, PARAM messages, and others.
 
+## What does it look like?
+
+<div style="text-align-center">
+    <!-- if you're reading this file offline, sorry about the html... -->
+	<img src="https://github.com/mishaturnbull/TrashBin/raw/master/scrnsht1.png"/>
+</div>
+
+## Built-in plugins
+
+A few plugins are available immediately for use on download.  These plugins
+are:
+
+* Parameter extractor:
+  * Given a log file, create a .param file with all of the parameters that are
+    in the log file.  Allows intelligent handling of duplicate entries and
+	regex-based filtering.
+* Message remover:
+  * Given a log file, create another log file keeping only selected data from
+    the first (in whitelist mode) or cloning the first file without selected
+	data from the first (in blacklist mode).  Currently only supports writing
+	*.log (plain-text) format; maybe a .bin writer coming in the future if I
+	can figure out the spec.
+* Plugin factory test:
+  * A simple debug plugin meant to test the UI.
+
+### Plugin extensibility
+
+This program was written with the primary goal being ease of extension by end
+users, hence the plugin architecture.  It uses a plugin factory object to spawn
+a plugin object for each file, allowing for both easy multiple-file processing
+and save/load of plugin configuration.  This also provides the capability for
+a factory object to store and always return the same instance of a plugin,
+which means that a plugin can support reading multiple files (and all of the
+capabilites that come with that, such as data correlation between flights).
+
+Although not trivial at this time, the ability for multiple plugins to easily
+cooperate with each other is in the plans for the near future, along with
+much more efficient implementations of multithreading-based execution.
+
+Documentation is... not really there yet.  But it's coming, I promise!
+
 ## Prerequisites
 
 * Python 3
   * Tcl/Tk libraries
+
+That's it!  To run the GUI at least.  Select parts of pymavlink are built in
+to allow for frequent tasks (such as reading log files) without having to
+install the entire pymavlink library.
+
+*However*, certain plugins may require additional modules.  If that is the
+case, the plugin author should specify what additional work is needed to get
+that particular plugin functioning correctly.  All of the modules that ship
+with TrashBin out-of-the-box will function without additional installs.
 
 ## Acknowledgements
 

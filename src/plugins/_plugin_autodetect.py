@@ -13,6 +13,7 @@ import src.plugins.pluginbase as pb
 _KNOWN_FILES = [
         "_plugin_autodetect.py",
         "pluginbase.py",
+        "persist.py",
         "__init__.py",
         "__pycache__.py",
     ]
@@ -94,27 +95,32 @@ def module_list():
         modules.append(importlib.import_module(modname))
     return modules
 
-def identify_valid_plugins(module):
+def _ident_subclasses_of(module, basecls):
     attribs = dir(module)
-    valid_plugins = []
+    children = []
     for attrib in attribs:
         attrib = getattr(module, attrib)
         if not isinstance(attrib, type):
             continue
         if not hasattr(attrib, '__mro__'):
             continue
-        if not pb.TrashBinPlugin in attrib.__mro__:
+        if not basecls in attrib.__mro__:
             continue
 
-        valid_plugins.append(attrib)
-    return valid_plugins
+        children.append(attrib)
+    return children
 
 def plugin_list():
     modules = module_list()
     plugins = []
+    factories = []
     for module in modules:
-        module_plugins = identify_valid_plugins(module)
+        module_plugins = _ident_subclasses_of(module, pb.TrashBinPlugin)
+        module_factories = _ident_subclasses_of(module, pb.TBPluginFactory)
         for mp in module_plugins:
             plugins.append(mp)
-    return plugins
+        for fc in module_factories:
+            factories.append(fc)
+    return plugins, factories
+
 

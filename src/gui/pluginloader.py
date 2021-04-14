@@ -22,7 +22,7 @@ class PluginLoaderPanel(object):
         for i in selected:
             plugin = self.plugins_available[i]
             instance = plugin(self.parent)
-            self.parent.plugmap.update({instance.uuid: instance})
+            self.parent.factmap.update({instance.uuid: instance})
             self.parent.ui_pluglistbox.insert(tk.END, plugin.plugin_name)
 
     def cb_describe(self, event):
@@ -60,7 +60,6 @@ class PluginLoaderPanel(object):
 
         # populate the plugin list
         for plugin in self.plugins_available:
-            print(plugin)
             self.pluginselbox.insert(tk.END, plugin.plugin_name)
 
         # plugin details box
@@ -70,4 +69,5 @@ class PluginLoaderPanel(object):
         rightframe.grid(row=0, column=1)
         self.detailsbox = tk.Text(rightframe, height=21, width=40)
         self.detailsbox.grid(row=0, column=0, sticky='nesw')
+        self.detailsbox.insert('1.0', "Select a plugin to see more info")
 
