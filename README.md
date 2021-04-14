@@ -45,6 +45,8 @@ Although not trivial at this time, the ability for multiple plugins to easily
 cooperate with each other is in the plans for the near future, along with
 much more efficient implementations of multithreading-based execution.
 
+Documentation is... not really there yet.  But it's coming, I promise!
+
 ## Prerequisites
 
 * Python 3
