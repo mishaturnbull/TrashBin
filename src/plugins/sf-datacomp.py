@@ -31,16 +31,32 @@ class SFDataCompFactory(pluginbase.TBPluginFactory):
         self.lineB.set('')
         self.do_popup = tk.BooleanVar()
         self.do_popup.set(True)
+        self.do_coop = tk.BooleanVar()
+        self.do_coop.set(False)
+        self.modevar = tk.IntVar()
+        self.modevar.set(0)
+        self.flags = {
+                'mindiff': tk.BooleanVar(),
+                'maxdiff': tk.BooleanVar(),
+                'avgdiff': tk.BooleanVar(),
+                'stddev': tk.BooleanVar(),
+                'rmsdiff': tk.BooleanVar(),
+                'r2': tk.BooleanVar(),
+                'avg-avg': tk.BooleanVar(),
+            }
+        
+        # turn all off and only re-enable the usual ones by default
+        for val in self.flags.values():
+            val.set(False)
+        self.flags['mindiff'].set(True)
+        self.flags['avgdiff'].set(True)
+        self.flags['maxdiff'].set(True)
 
     @property
     def work_per_file(self):
         return len(self.lines) - 1
 
     def start_ui(self, frame):
-        self.popupbox = tk.Checkbutton(frame, text="Display results",
-                variable=self.do_popup, onvalue=True, offvalue=False)
-        self.popupbox.grid(row=0, column=0, columnspan=2, sticky='nw')
-
         self.lineframe = tk.Frame(frame)
         tk.Label(self.lineframe, text="A:").grid(row=0, column=0, sticky='nw')
         tk.Label(self.lineframe, text="B:").grid(row=1, column=0, sticky='nw')
@@ -48,14 +64,65 @@ class SFDataCompFactory(pluginbase.TBPluginFactory):
         entryA.grid(row=0, column=1, sticky='new')
         entryB = tk.Entry(self.lineframe, textvariable=self.lineB)
         entryB.grid(row=1, column=1, sticky='new')
-
-        self.lineframe.grid(row=1, column=0, sticky='nesw')
-        frame.grid_rowconfigure(1, weight=1)
+        self.lineframe.grid(row=0, column=0, sticky='new')
         frame.grid_columnconfigure(0, weight=1)
-        frame.update()
+
+        self.oframe = tk.Frame(frame)
+        statsframe = tk.LabelFrame(self.oframe, text='Stats', relief=tk.RIDGE)
+        ck_mindiff = tk.Checkbutton(statsframe, text='Min diff',
+                variable=self.flags['mindiff'], onvalue=True, offvalue=False)
+        ck_mindiff.grid(row=0, column=0, sticky='nw')
+        ck_maxdiff = tk.Checkbutton(statsframe, text='Max diff',
+                variable=self.flags['maxdiff'], onvalue=True, offvalue=False)
+        ck_maxdiff.grid(row=1, column=0, sticky='nw')
+        ck_avgdiff = tk.Checkbutton(statsframe, text='Avg diff',
+                variable=self.flags['avgdiff'], onvalue=True, offvalue=False)
+        ck_avgdiff.grid(row=2, column=0, sticky='nw')
+        ck_stddev = tk.Checkbutton(statsframe, text="Std. dev",
+                variable=self.flags['stddev'], onvalue=True, offvalue=False)
+        ck_stddev.grid(row=3, column=0, sticky='nw')
+        ck_rmsdiff = tk.Checkbutton(statsframe, text="RMS diff",
+                variable=self.flags['rmsdiff'], onvalue=True, offvalue=False)
+        ck_rmsdiff.grid(row=4, column=0, sticky='nw')
+        ck_r2 = tk.Checkbutton(statsframe, text='R^2',
+                variable=self.flags['r2'], onvalue=True, offvalue=False)
+        ck_r2.grid(row=5, column=0, sticky='nw')
+        ck_avgavg = tk.Checkbutton(statsframe, text="AvgA - AvgB",
+                variable=self.flags['avg-avg'], onvalue=True, offvalue=False)
+        ck_avgavg.grid(row=6, column=0, sticky='nw')
+        statsframe.grid(row=0, column=0, rowspan=3, sticky='nw')
+
+        outframe = tk.LabelFrame(self.oframe, text="Output", relief=tk.RIDGE)
+        popupbox = tk.Checkbutton(outframe, text="Display results",
+                variable=self.do_popup, onvalue=True, offvalue=False)
+        popupbox.grid(row=0, column=0, sticky='nw')
+        coopbox = tk.Checkbutton(outframe, text="Coop mode",
+                variable=self.do_coop, onvalue=True, offvalue=False)
+        coopbox.grid(row=1, column=0, sticky='nw')
+        outframe.grid(row=0, column=1, sticky='nw')
+
+        modeframe = tk.LabelFrame(self.oframe, text="Tsync handling", 
+                relief=tk.RIDGE)
+        rb_mostrec = tk.Radiobutton(modeframe, text="Most recent",
+                variable=self.modevar,
+                value=0,
+            )
+        rb_lininterp = tk.Radiobutton(modeframe, text="Linear interpolation",
+                variable=self.modevar,
+                value=1,
+            )
+        rb_nearest = tk.Radiobutton(modeframe, text="Nearest (timewise)",
+                variable=self.modevar,
+                value=2,
+            )
+        rb_mostrec.grid(row=0, column=0, sticky='nw')
+        rb_lininterp.grid(row=1, column=0, sticky='nw')
+        rb_nearest.grid(row=2, column=0, sticky='nw')
+        modeframe.grid(row=1, column=1, sticky='nw')
+        self.oframe.grid(row=1, column=0, sticky='nw')
 
     def stop_ui(self, frame):
-        self.popupbox.destroy()
+        self.oframe.destroy()
         self.filterframe.destroy()
         frame.grid_rowconfigure(1, weight=0)
         frame.grid_columnconfigure(0, weight=0)
@@ -63,17 +130,24 @@ class SFDataCompFactory(pluginbase.TBPluginFactory):
     def export_savestate(self):
         return {
                 "popup": self.do_popup.get(),
+                "coop": self.do_coop.get(),
                 "lines": [
                     self.lineA.get(),
                     self.lineB.get(),
                 ],
+                "mode": self.modevar.get(),
+                "flags": {k: v.get() for k, v in self.flags.items()}
             }
 
     def load_savestate(self, state):
         self.do_popup.set(state['popup'])
+        self.do_coop.set(state['coop'])
         lines = state['lines']
         self.lineA.set(lines[0])
         self.lineB.set(lines[1])
+        self.modevar.set(state['mode'])
+        for key, val in state['flags'].items():
+            self.flags[key].set(val)
 
     def cleanup_and_exit(self):
         pass
@@ -112,14 +186,15 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
             d = msg.to_dict()
             packettype = d['mavpackettype']
             if packettype == self.lineA[0]:
-                self._dispatch(self.last_point_a, d)
+                self._dispatch(self.last_point_a, self.last_point_b, d)
             elif packettype == self.lineB[0]:
-                self._dispatch(self.last_point_b, d)
+                self._dispatch(self.last_point_b, self.last_point_a, d)
             else:
                 continue
 
-    def _dispatch(self, tupl, d):
-        tupl[0] = d[self.lineA[1]]
-        tupl[1] = d['TimeUS']
-        
+    def _dispatch(self, tupl, nottpl, d):
+        prev_a_tsmp = tupl[1]
+        new_a_tsmp = d['TimeUS']
+        prev_b_tsmp = nottpl[1]
+
 
