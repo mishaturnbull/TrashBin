@@ -27,6 +27,8 @@ def _auto_find_fact_cls(state):
 def load_all_savestates(states, handler):
     factories = []
     for state in states:
+        if handler.debug.get():
+            print("Loading {}".format(state['plugin_cls']))
         cls = _auto_find_fact_cls(state)
         if cls is None:
             print("Could not find plugin {}".format(state['plugin_name']))
