@@ -28,6 +28,9 @@ def load_all_savestates(states, handler):
     factories = []
     for state in states:
         cls = _auto_find_fact_cls(state)
+        if cls is None:
+            print("Could not find plugin {}".format(state['plugin_name']))
+            continue
         inst = cls(handler)
         inst._load_savestate(state, handler)
         factories.append(inst)
