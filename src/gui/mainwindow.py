@@ -82,6 +82,9 @@ class MainPanelUI(object):
 
         self.root.resizable(False, False)
 
+        if self.debug.get():
+            print("UI setup complete")
+
     def cb_save_plugins(self):
         filename = tkfd.asksaveasfilename(
                 parent=self.root,
@@ -93,8 +96,12 @@ class MainPanelUI(object):
                 ),
             )
         if os.path.splitext(filename)[1].endswith('tbz'):
+            if self.debug.get():
+                print("Saving to zip-wrapped file")
             persist.write_zip_file(filename, list(self.factmap.values()))
         else:
+            if self.debug.get():
+                print("Saving to JSON file")
             persist.write_text_file(filename, list(self.factmap.values()))
 
     def cb_load_plugins(self):
@@ -109,9 +116,15 @@ class MainPanelUI(object):
                 ),
             )
         if os.path.splitext(filename)[1].endswith("tbz"):
+            if self.debug.get():
+                print("Reading zip-wrapped file")
             factories = persist.load_zip_file(filename, self)
         else:
+            if self.debug.get():
+                print("Reading JSON file")
             factories = persist.load_text_file(filename, self)
+        if self.debug.get():
+            print("Got list of factories: {}".format(factories))
         for factory in factories:
             self.factmap.update({factory.uuid: factory})
             self.ui_pluglistbox.insert(tk.END, factory.plugin_name)
@@ -229,8 +242,12 @@ class MainPanelUI(object):
         """
         Callback to handle the start(/stop) button press.
         """
+        if self.debug.get():
+            print("Handling go button")
         if not self.processor.active:
             # start
+            if self.debug.get():
+                print("Starting processor")
             self.processor.update()
             self.processor.reinit()
             self.pbar['maximum'] = self.processor.max_work
@@ -256,6 +273,8 @@ class MainPanelUI(object):
             idx = None
         # first thing to do is destroy the old ui if it's still up
         if not (self._plugui is None):
+            if self.debug.get():
+                print("Removing old plugin UI")
             try:
                 self._plugui.stop_ui(self.frame3)
             except Exception as e:
@@ -278,6 +297,8 @@ class MainPanelUI(object):
                 self._plugui = val
                 break
         # mark as active & setup new factory UI!
+        if self.debug.get():
+            print("Starting new plugin UI")
         try:
             self._plugui.start_ui(self.frame3)
         except:
