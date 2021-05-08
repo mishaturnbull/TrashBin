@@ -157,8 +157,11 @@ class SFDataCompFactory(pluginbase.TBPluginFactory):
                 self,
                 processor,
                 self.do_popup.get(),
+                self.do_coop.get(),
                 self.lineA.get(),
                 self.lineB.get(),
+                self.modevar.get(),
+                {k: v.get() for k, v in self.flags.items()},
             )
         return plug
 
@@ -168,33 +171,53 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
     Does the data comparison work.
     """
     
-    def __init__(self, handler, processor, popup, A, B):
+    def __init__(self, handler, processor, popup, coop, A, B, mode, flags):
         super().__init__(handler, proc)
         self.popup = popup
+        self.coop = coop
         self.infilename = None
         self.lineA = A.split('.')
         self.lineB = B.split('.')
         self.diffpoints = []
-        self.last_point_a = (None, 0)
-        self.last_point_b = (None, 0)
+        self.mode = mode
+        self.flags = flags
+        self.data = {}
+
+        for key, val in self.flags.items():
+            if val:
+                self.data.update({key: None})
 
     def run_filename(self, filename):
         self.infilename = filename
 
     def run_messages(self, messages):
-        for msg in messages:
-            d = msg.to_dict()
-            packettype = d['mavpackettype']
-            if packettype == self.lineA[0]:
-                self._dispatch(self.last_point_a, self.last_point_b, d)
-            elif packettype == self.lineB[0]:
-                self._dispatch(self.last_point_b, self.last_point_a, d)
-            else:
-                continue
+        if self.mode == 0:
+            self._msgs_mostrecent(messages)
+        elif self.mode == 1:
+            self._msgs_lininterp(messages)
+        elif self.mode == 2:
+            self._msgs_nearest(messages)
 
-    def _dispatch(self, tupl, nottpl, d):
-        prev_a_tsmp = tupl[1]
-        new_a_tsmp = d['TimeUS']
-        prev_b_tsmp = nottpl[1]
+        if self.coop:
+            self._publish_results()
+        if self.popup:
+            self._disp_results()
+
+    def _rolling_stats(self, newpoint):
+        if self.flags['mindiff']:
+            if newpoint[0] < self.data['mindiff']:
+                self.data['mindiff'] = newpoint[0]
+        if self.flags['maxdiff']:
+            if newpoint[0] > self.data['maxdiff']:
+                self.data['maxdiff'] = newpoint[0]
+
+    def _msgs_mostrecent(self, messages):
+        raise NotImplemented("Doesn't have that yet, sorry")
+
+    def _msgs_lininterp(self, messages):
+        raise NotImplemented("Doesn't have that yet, sorry")
+
+    def _msgs_nearest(self, messages):
+        raise NotImplemented("Doesn't have that yet, sorry")
 
 
