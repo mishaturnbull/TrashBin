@@ -59,6 +59,11 @@ the plugin to collect data from as many files as needed.
 
 ## Base classes
 
+This section describes base classes to override to produce a factory/plugin
+pair.
+
+### Factory
+
 The base class for factory objects is `pluginbase.TBPluginFactory`.  The
 following methods must be overriden to produce a functional factory object:
 
@@ -111,4 +116,71 @@ def give_plugin(self, processor=None):
 		self._plugin_inst = ExamplePlugin(self, processor, self.foo, self.bar)
     return self._plugin_inst
 ```
+
+The following methods/attributes are not technically required, but strongly
+suggested to create a better factory:
+
+* `author_name`: string, representing author name
+* `author_email`: string, representing author contact email (WARNING: this is
+  public!)
+* `plugin_name`: A readable name of the plugin
+* `plugin_desc`: String (may be multiple lines) describing in detail what the
+  plugin does
+* `__init__` method: best place to create factory-specific attributes.  Be sure
+  to call the superclass `__init__` as well.
+
+### Plugin
+
+The base class for plugin objects is `pluginbase.TrashBinPlugin`.  The following
+methods must be overriden to produce a functional plugin object:
+
+1. `cleanup_and_exit` method:
+  * This method is responsible for doing any cleanup work necessary before the
+    plugin is deleted.  
+  * Full signature: `def cleanup_and_exit(self):`
+
+The following methods are not technically required, but should be where the
+actual log processing work takes place.  You may safely assume these methods are
+called in the order listed below, but may *not* assume that they are not called
+simultaneously (from different threads).  You also may not make assumptions
+about the current execution state of other plugins' `run_` methods.
+(footnote 1)
+
+Unless you are inheriting from a class other than `TrashBinPlugin`, you do *not*
+need to call the superclass method in your overrides.
+
+1. `run_filename` method:
+  * This method is called with the filename as an argument.  This will be the
+    first time the plugin is made aware of the filename of the file it's
+	processing.
+  * Typical usage here, if producing another file, could be to determine the
+    desired output filename.
+  * Full signature: `def run_filename(self, filename):`
+2. `run_filehandle` method:
+  * This method is called after the processor has opened the input file, and
+    it passes the file handle object to the plugin.
+  * Full signature: `def run_filehandle(self, filehandle):`
+3. `run_parsedlog` method:
+  * This method is run after the initial log parsing is completed by the
+    DFReader class.  In general, for basic message processing, it is less
+	efficient to use this method than to use the following; but this method
+	would provide access to certain attributes of the log that the pure message
+	list would not.
+  * The argument to this class is fully compliant with `pymavlink.DFReader`.
+  * Full signature: `def run_parsedlog(self, dflog):`
+4. `run_messages` method:
+  * This method is called by the processor once it has a list of every message
+    in the log file.
+  * In general, it is suggested to use this over the previous method if only
+    message processing is being done; it reduces the amount of work done
+    overall.
+  * The argument to this method is a list of `logutil.DFReader.DFMessage`
+    objects.  They may most easily be processed by calling the `to_dict`
+	method to generate a native dictionary.
+  * Full signature: `def run_messages(self, messages):`
+
+(footnote 1) Technically, these assumptions depend on the processor object being
+used.  However, at time of writing, there is only one available, and the others
+in the roadmap make a more heavy use of multithreading and thus these assumtions
+should remain valid.
 
