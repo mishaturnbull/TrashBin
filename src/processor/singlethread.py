@@ -16,7 +16,7 @@ class Worker(object):
     def __init__(self, handler):
         self.handler = handler
 
-    @proprety
+    @property
     def data(self):
         return self.handler.data
 
