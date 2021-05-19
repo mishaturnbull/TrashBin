@@ -109,6 +109,10 @@ class TrashBinPlugin(object):
     def uuid(self):
         return str(self._uuid)
 
+    @property
+    def coopdata(self):
+        return self.processor.data
+
     def cleanup_and_exit(self):
         raise NotImplemented("Method cleanup_and_exit must be overriden!")
 
