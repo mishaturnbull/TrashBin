@@ -43,6 +43,7 @@ class SFDataCompFactory(pluginbase.TBPluginFactory):
                 'rmsdiff': tk.BooleanVar(),
                 'r2': tk.BooleanVar(),
                 'avg-avg': tk.BooleanVar(),
+                'rawdiff': tk.BooleanVar(),
             }
         
         # turn all off and only re-enable the usual ones by default
@@ -51,6 +52,7 @@ class SFDataCompFactory(pluginbase.TBPluginFactory):
         self.flags['mindiff'].set(True)
         self.flags['avgdiff'].set(True)
         self.flags['maxdiff'].set(True)
+        self.flags['rawdiff'].set(True)
 
     @property
     def work_per_file(self):
@@ -90,6 +92,9 @@ class SFDataCompFactory(pluginbase.TBPluginFactory):
         ck_avgavg = tk.Checkbutton(statsframe, text="AvgA - AvgB",
                 variable=self.flags['avg-avg'], onvalue=True, offvalue=False)
         ck_avgavg.grid(row=6, column=0, sticky='nw')
+        ck_rawdiff = tk.Checkbutton(statsframe, text="Raw diff",
+                variable=self.flags['rawdiff'], onvalue=True, offvalue=False)
+        ck_rawdiff.grid(row=7, column=0, sticky='nw')
         statsframe.grid(row=0, column=0, rowspan=3, sticky='nw')
 
         outframe = tk.LabelFrame(self.oframe, text="Output", relief=tk.RIDGE)
@@ -182,15 +187,20 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
         self.mode = mode
         self.flags = flags
         self.data = {}
+        self.same_packet = self.lineA[0] == self.lineB[0]
 
         for key, val in self.flags.items():
             if val:
                 self.data.update({key: None})
+        if 'rawdiff' in self.data.keys():
+            self.data['rawdiff'] = []
 
     def run_filename(self, filename):
         self.infilename = filename
 
     def run_messages(self, messages):
+        if self.same_packet:
+            self._msgs_same(messages)
         if self.mode == 0:
             self._msgs_mostrecent(messages)
         elif self.mode == 1:
@@ -204,12 +214,23 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
             self._disp_results()
 
     def _rolling_stats(self, newpoint):
+        if self.flags['rawdiff']:
+            self.data['rawdiff'].append(newpoint)
         if self.flags['mindiff']:
             if newpoint[0] < self.data['mindiff']:
                 self.data['mindiff'] = newpoint[0]
         if self.flags['maxdiff']:
             if newpoint[0] > self.data['maxdiff']:
                 self.data['maxdiff'] = newpoint[0]
+
+    def _msgs_same(self, messages):
+        for message in messages:
+            if message['mavpackettype'] != self.lineA[0]:
+                continue
+
+            fieldA = message[self.lineA[1]]
+            fieldB = message[self.lineB[1]]
+            self._rolling_stats(fieldB - fieldA)
 
     def _msgs_mostrecent(self, messages):
         raise NotImplemented("Doesn't have that yet, sorry")
