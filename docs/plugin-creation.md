@@ -179,6 +179,11 @@ need to call the superclass method in your overrides.
 	method to generate a native dictionary.
   * Full signature: `def run_messages(self, messages):`
 
+To allow for cooperation between plugins, the TrashBinPlugin has an attribute
+`coopdata`, which returns a dictionary-like object shared between all plugins.
+Plugins have arbitrary read-write access to this object, and this is the
+suggested method of sharing data cooperatively.
+
 (footnote 1) Technically, these assumptions depend on the processor object being
 used.  However, at time of writing, there is only one available, and the others
 in the roadmap make a more heavy use of multithreading and thus these assumtions
