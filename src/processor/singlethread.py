@@ -16,6 +16,10 @@ class Worker(object):
     def __init__(self, handler):
         self.handler = handler
 
+    @property
+    def data(self):
+        return self.handler.data
+
     def stage_filename(self, filename, plugins):
         for plugin in plugins:
             plugin.run_filename(filename)
