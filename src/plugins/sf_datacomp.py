@@ -205,20 +205,24 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
         self._n_points = 0
         self.percent_scale = 100
 
-        for key, val in self.flags.items():
-            if val:
-                self.data.update({key: None})
+        self.data = {
+                'rawdiff': [],
+                'avg-avg-': [],
+                'mindiff': 2e32,
+                'maxdiff': -2e32,
+                'avgdiff': 0,
+                'stddev': 0,
+                'rmsdiff': 0,
+                'r2': 0,
+            }
 
         # do special-case inits
-        if self.flags['rawdiff']:
-            self.data['rawdiff'] = []
         if self.flags['stddev']:
             self.S = 0
             self.M = 0
         if self.flags['avg-avg']:
             self._rolling_avgA = 0
             self._rolling_avgB = 0
-            self.data['avg-avg'] = []
 
     def run_filename(self, filename):
         self.infilename = filename
@@ -229,7 +233,7 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
 
         if self.same_packet:
             self._msgs_same(messages)
-        if self.mode == 0:
+        elif self.mode == 0:
             self._msgs_mostrecent(messages)
         elif self.mode == 1:
             self._msgs_lininterp(messages)
@@ -252,13 +256,13 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
 
         # see if this point is less than the previous minimum
         if self.flags['mindiff']:
-            if newpoint[0] < self.data['mindiff']:
-                self.data['mindiff'] = newpoint[0]
+            if newpoint < self.data['mindiff']:
+                self.data['mindiff'] = newpoint
 
         # see if this point is more than the previous maximum
         if self.flags['maxdiff']:
-            if newpoint[0] > self.data['maxdiff']:
-                self.data['maxdiff'] = newpoint[0]
+            if newpoint > self.data['maxdiff']:
+                self.data['maxdiff'] = newpoint
 
         # update a rolling average
         if self.flags['avgdiff']:
@@ -307,6 +311,10 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
 
     def _msgs_same(self, messages):
         for message in messages:
+            if message is None:
+                self.handler.notify_work_done(self.percent_scale)
+                return
+            message = message.to_dict()
             if message['mavpackettype'] != self.lineA[0]:
                 continue
 
@@ -332,6 +340,10 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
         assert packet_A != packet_B, "Should be using _msgs_same!"
 
         for message in messages:
+            if message is None:
+                self.handler.notify_work_done(self.percent_scale)
+                return
+
             # first, figure out which message we have
             have_lineA = message['mavpackettype'] == packet_A
             have_lineB = message['mavpackettype'] == packet_B
@@ -361,4 +373,6 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
     def _msgs_nearest(self, messages):
         raise NotImplemented("Doesn't have that yet, sorry")
 
+    def _publish_results(self):
+        print(self.data)
 
