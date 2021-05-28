@@ -56,7 +56,7 @@ class SFDataCompFactory(pluginbase.TBPluginFactory):
 
     @property
     def work_per_file(self):
-        return len(self.lines) - 1
+        return 100
     
     def check_rms_reqs(self):
         if self.flags['rmsdiff'].get():
@@ -191,7 +191,7 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
     """
     
     def __init__(self, handler, processor, popup, coop, A, B, mode, flags):
-        super().__init__(handler, proc)
+        super().__init__(handler, processor)
         self.popup = popup
         self.coop = coop
         self.infilename = None
@@ -203,6 +203,7 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
         self.data = {}
         self.same_packet = self.lineA[0] == self.lineB[0]
         self._n_points = 0
+        self.percent_scale = 100
 
         for key, val in self.flags.items():
             if val:
@@ -223,6 +224,9 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
         self.infilename = filename
 
     def run_messages(self, messages):
+        # work out the scale factor for percentage first
+        self.percent_scale = 100 // len(messages)
+
         if self.same_packet:
             self._msgs_same(messages)
         if self.mode == 0:
@@ -310,8 +314,46 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
             fieldB = message[self.lineB[1]]
             self._rolling_stats(fieldB, fieldA)
 
+            self.handler.notify_work_done(self.percent_scale)
+
     def _msgs_mostrecent(self, messages):
-        raise NotImplemented("Doesn't have that yet, sorry")
+        # set up some initial values
+        time_since_last_other = 0
+        last_val_A = None
+        last_val_B = None
+        last_time_A = None
+        last_time_B = None
+        # presetting these saves a few cycles on accesses during the loop
+        key_A = self.lineA[1]
+        key_B = self.lineB[1]
+        packet_A = self.lineA[0]
+        packet_B = self.lineB[0]
+        # this should always be false, but sanity-check just in case
+        assert packet_A != packet_B, "Should be using _msgs_same!"
+
+        for message in messages:
+            # first, figure out which message we have
+            have_lineA = message['mavpackettype'] == packet_A
+            have_lineB = message['mavpackettype'] == packet_B
+
+            # update the most-recent values and make skip first packet to make
+            # sure we don't deal with values that don't make sense
+            if have_lineA:
+                last_val_A = message[key_A]
+                last_time_A = message['TimeUS']
+                if last_val_B is None:
+                    continue
+            if have_lineB:
+                last_val_B = message[key_B]
+                last_time_B = message['TimeUS']
+                if last_val_A is None:
+                    continue
+            
+            # invoke the stats counter!
+            self._rolling_stats(last_val_B, last_val_A)
+            
+            # update progress bar
+            self.handler.notify_work_done(self.percent_scale)
 
     def _msgs_lininterp(self, messages):
         raise NotImplemented("Doesn't have that yet, sorry")
