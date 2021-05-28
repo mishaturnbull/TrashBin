@@ -188,6 +188,10 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
         self.flags = flags
         self.data = {}
         self.same_packet = self.lineA[0] == self.lineB[0]
+        self._n_points = 0
+        if self.flags['stddev']:
+            self.S = 0
+            self.M = 0
 
         for key, val in self.flags.items():
             if val:
@@ -214,14 +218,43 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
             self._disp_results()
 
     def _rolling_stats(self, newpoint):
+        self._n_points += 1
+
+        # keep track of raw differences
+        # this one is special-cased as a list rather than a single value
         if self.flags['rawdiff']:
             self.data['rawdiff'].append(newpoint)
+
+        # see if this point is less than the previous minimum
         if self.flags['mindiff']:
             if newpoint[0] < self.data['mindiff']:
                 self.data['mindiff'] = newpoint[0]
+
+        # see if this point is more than the previous maximum
         if self.flags['maxdiff']:
             if newpoint[0] > self.data['maxdiff']:
                 self.data['maxdiff'] = newpoint[0]
+
+        # update a rolling average
+        if self.flags['avgdiff']:
+            new_avg = (self._n_points * self.data['avgdiff'] + newpoint) / \
+                    (self._n_points + 1)
+            self.data['avgdiff'] = new_avg
+
+        # update a rolling variance
+        # we'll have to square-root at the end, stddev is root of variance
+        if self.flags['stddev']:
+            # https://jonisalonen.com/2013/deriving-welfords-method-for-\
+            # computing-variance/
+            oldM = self.M
+            self.M = self.M + (newpoint - self.M) / self._n_points
+            self.S = self.S + (newpoint - self.M ) * (newpoint - oldM)
+            # have to check if _n_points is above 1 here, otherwise will get
+            # divide-by-zero on the first point
+            # setting the stddev early is fine, it'll just get overridden as
+            # more data comes in
+            if self._n_points <= 2:
+                self.data['stddev'] = self.S / (self._n_points - 1)
 
     def _msgs_same(self, messages):
         for message in messages:
@@ -233,19 +266,7 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
             self._rolling_stats(fieldB - fieldA)
 
     def _msgs_mostrecent(self, messages):
-        time_since_last_other = 0
-        last_other_type = None
-        last_other = None
-        last_same = None
-        for message in messages:
-            have_lineA = message['mavpackettype'] == self.lineA[0]
-            have_lineB = message['mavpackettype'] == self.lineB[0]
-            if self.have_lineA:
-                if last_other_type == 'A':
-                    last_other_type = 'B'
-                    time_since_last_other = \
-                            int(message['TimeUS']) - int(last_other['TimeUS'])
-
+        raise NotImplemented("Doesn't have that yet, sorry")
 
     def _msgs_lininterp(self, messages):
         raise NotImplemented("Doesn't have that yet, sorry")
