@@ -33,6 +33,8 @@ class ParamExtractFactory(pluginbase.TBPluginFactory):
         self.paramfilter.set('.*')
         self.force_output = tk.BooleanVar()
         self.force_output.set(False)
+        self.coop_info = tk.BooleanVar()
+        self.coop_info.set(False)
 
     @property
     def work_per_file(self):
@@ -58,9 +60,14 @@ class ParamExtractFactory(pluginbase.TBPluginFactory):
         rb_fail.grid(row=2, column=0, sticky='nw')
         self.mvselframe.grid(row=0, column=0, sticky='nw')
 
-        self.forcebox = tk.Checkbutton(frame, text='Force output',
+        self.optsframe = tk.Frame(frame)
+        self.forcebox = tk.Checkbutton(self.optsframe, text='Force output',
                 variable=self.force_output, onvalue=True, offvalue=False)
         self.forcebox.grid(row=0, column=1, sticky='nw')
+        self.coopbox = tk.Checkbutton(self.optsframe, text="Coop mode",
+                variable=self.coop_info, onvalue=True, offvalue=False)
+        self.coopbox.grid(row=1, column=1, sticky='nw')
+        self.optsframe.grid(row=0, column=1, sticky='nesw')
 
         self.filterframe = tk.Frame(frame)
         tk.Label(self.filterframe, text="Parameter name filter").grid(
@@ -93,12 +100,14 @@ class ParamExtractFactory(pluginbase.TBPluginFactory):
                 'multivalhandle': self.multivalhandle.get(),
                 'paramfilter': self.paramfilter.get(),
                 'forceout': self.force_output.get(),
+                'coop': self.coop_info.get(),
             }
 
     def load_savestate(self, state):
         self.multivalhandle.set(state['multivalhandle'])
         self.paramfilter.set(state['paramfilter'])
         self.force_output.set(state['forceout'])
+        self.coop_info.set(state['coop'])
 
     def cleanup_and_exit(self):
         pass
@@ -107,7 +116,8 @@ class ParamExtractFactory(pluginbase.TBPluginFactory):
         plug = ParamExtractPlugin(self,
                 self.multivalhandle.get(),
                 [self.paramfilter.get()],
-                self.force_output.get()
+                self.force_output.get(),
+                self.coop_info.get(),
             )
         print('pef giving plugin {}'.format(plug))
         return plug
@@ -118,12 +128,13 @@ class ParamExtractPlugin(pluginbase.TrashBinPlugin):
     """
     total_work = 3
 
-    def __init__(self, handler, multivalhandle, paramfilter, forceoutput):
+    def __init__(self, handler, multivalhandle, paramfilter, forceoutput, coop):
         self.handler = handler
         self.multivalhandle = multivalhandle
         self.paramfilter = paramfilter
         self.forceoutput = forceoutput
         self.outfilename = None
+        self.coop = coop
     
     def run_filename(self, filename):
         print("entering pep.run_filename")
@@ -147,6 +158,8 @@ class ParamExtractPlugin(pluginbase.TrashBinPlugin):
                 force=self.forceoutput,
             )
         self.handler.notify_work_done()
+        if self.coop:
+            self.coopdata['params'] = params
         print('exited')
 
     def cleanup_and_exit(self):
