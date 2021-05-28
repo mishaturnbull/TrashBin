@@ -57,6 +57,16 @@ class SFDataCompFactory(pluginbase.TBPluginFactory):
     @property
     def work_per_file(self):
         return len(self.lines) - 1
+    
+    def check_rms_reqs(self):
+        if self.flags['rmsdiff'].get():
+            self.flags['stddev'].set(True)
+            self.flags['avgdiff'].set(True)
+            self.ck_avgdiff.config(state=tk.DISABLED)
+            self.ck_stddev.config(state=tk.DISABLED)
+        else:
+            self.ck_avgdiff.config(state=tk.NORMAL)
+            self.ck_stddev.config(state=tk.NORMAL)
 
     def start_ui(self, frame):
         self.lineframe = tk.Frame(frame)
@@ -80,15 +90,19 @@ class SFDataCompFactory(pluginbase.TBPluginFactory):
         ck_avgdiff = tk.Checkbutton(statsframe, text='Avg diff',
                 variable=self.flags['avgdiff'], onvalue=True, offvalue=False)
         ck_avgdiff.grid(row=2, column=0, sticky='nw')
+        self.ck_avgdiff = ck_avgdiff
         ck_stddev = tk.Checkbutton(statsframe, text="Std. dev",
                 variable=self.flags['stddev'], onvalue=True, offvalue=False)
         ck_stddev.grid(row=3, column=0, sticky='nw')
+        self.ck_stddev = ck_stddev
         ck_rmsdiff = tk.Checkbutton(statsframe, text="RMS diff",
-                variable=self.flags['rmsdiff'], onvalue=True, offvalue=False)
+                variable=self.flags['rmsdiff'], onvalue=True, offvalue=False,
+                command=self.check_rms_reqs)
         ck_rmsdiff.grid(row=4, column=0, sticky='nw')
         ck_r2 = tk.Checkbutton(statsframe, text='R^2',
                 variable=self.flags['r2'], onvalue=True, offvalue=False)
-        ck_r2.grid(row=5, column=0, sticky='nw')
+        # will leave this commented out until it's implemented
+        #ck_r2.grid(row=5, column=0, sticky='nw')
         ck_avgavg = tk.Checkbutton(statsframe, text="AvgA - AvgB",
                 variable=self.flags['avg-avg'], onvalue=True, offvalue=False)
         ck_avgavg.grid(row=6, column=0, sticky='nw')
@@ -189,15 +203,21 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
         self.data = {}
         self.same_packet = self.lineA[0] == self.lineB[0]
         self._n_points = 0
-        if self.flags['stddev']:
-            self.S = 0
-            self.M = 0
 
         for key, val in self.flags.items():
             if val:
                 self.data.update({key: None})
-        if 'rawdiff' in self.data.keys():
+
+        # do special-case inits
+        if self.flags['rawdiff']:
             self.data['rawdiff'] = []
+        if self.flags['stddev']:
+            self.S = 0
+            self.M = 0
+        if self.flags['avg-avg']:
+            self._rolling_avgA = 0
+            self._rolling_avgB = 0
+            self.data['avg-avg'] = []
 
     def run_filename(self, filename):
         self.infilename = filename
@@ -217,8 +237,9 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
         if self.popup:
             self._disp_results()
 
-    def _rolling_stats(self, newpoint):
+    def _rolling_stats(self, fieldB, fieldA):
         self._n_points += 1
+        newpoint = fieldB - fieldA
 
         # keep track of raw differences
         # this one is special-cased as a list rather than a single value
@@ -241,8 +262,7 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
                     (self._n_points + 1)
             self.data['avgdiff'] = new_avg
 
-        # update a rolling variance
-        # we'll have to square-root at the end, stddev is root of variance
+        # update a rolling standard deviation
         if self.flags['stddev']:
             # https://jonisalonen.com/2013/deriving-welfords-method-for-\
             # computing-variance/
@@ -254,7 +274,32 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
             # setting the stddev early is fine, it'll just get overridden as
             # more data comes in
             if self._n_points <= 2:
-                self.data['stddev'] = self.S / (self._n_points - 1)
+                self.data['stddev'] = math.sqrt(self.S / (self._n_points - 1))
+
+        # update a rolling root-mean-square of the differences
+        # if rmsdiff is enabled, it is safe to assume that avgdiff and stddev
+        # are also enabled due to a UI feature that prevents users disabling
+        # those two if rmsdiff is checked
+        # yeah, yeah, assume user breaks everything, but it's too much math
+        # to actually follow through on that.  maybe some day i'll come back
+        # and do this properly.
+        if self.flags['rmsdiff']:
+            self.data['rmsdiff'] = math.sqrt(
+                    self.data['avgdiff']**2 + self.data['stddev']**2
+                )
+
+        # update a rolling difference of averages
+        # this is avg(A) - avg(B)
+        # this one is also a list
+        if self.flags['avg-avg']:
+            newA = (self._n_points * self._rolling_avgA + fieldA) / \
+                    (self._n_points + 1)
+            newB = (self._n_points * self._rolling_avgB + fieldB) / \
+                    (self._n_points + 1)
+            self._rolling_avgA = newA
+            self._rolling_avgB = newB
+            self.data['avg-avg'].append(newB - newA)
+
 
     def _msgs_same(self, messages):
         for message in messages:
@@ -263,7 +308,7 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
 
             fieldA = message[self.lineA[1]]
             fieldB = message[self.lineB[1]]
-            self._rolling_stats(fieldB - fieldA)
+            self._rolling_stats(fieldB, fieldA)
 
     def _msgs_mostrecent(self, messages):
         raise NotImplemented("Doesn't have that yet, sorry")
