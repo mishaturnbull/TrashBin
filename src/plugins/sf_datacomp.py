@@ -229,7 +229,7 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
 
     def run_messages(self, messages):
         # work out the scale factor for percentage first
-        self.percent_scale = 100 // len(messages)
+        self.percent_scale = 100 / len(messages)
 
         if self.same_packet:
             self._msgs_same(messages)
@@ -371,8 +371,77 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
             # update progress bar
             self.handler.notify_work_done(self.percent_scale)
 
+    def _find_next_packet(self, messages, targettype, start=0):
+        """
+        Look ahead in the message list to find the next packet of a given
+        type.
+        """
+        for message in messages[start:]:
+            if message is None:
+                return None
+            if message.fmt.name == targettype:
+                return message
+        return None
+
     def _msgs_lininterp(self, messages):
-        raise NotImplemented("Doesn't have that yet, sorry")
+        # set up some storage for iterations and cycle reduction
+        intrpA = [[0, 0], [0, 0]]
+        intrpB = [[0, 0], [0, 0]]
+        keyA = self.lineA[1]
+        keyB = self.lineB[1]
+        packetA = self.lineA[0]
+        packetB = self.lineB[0]
+        idx = 0
+
+        # lets'a gooo!
+        for message in messages:
+            # first off - sanity check packet.  do we want it?
+            if message is None:
+                self.handler.notify_work_done(self.percent_scale)
+                return
+            message = message.to_dict()
+
+            # do we have one of our messages
+            have_lineA = message['mavpackettype'] == packetA
+            have_lineB = message['mavpackettype'] == packetB
+            if not (have_lineA or have_lineB):
+                # not interested in other messages
+                continue
+
+            # to reduce duplicate code, we'll do some variable reassignment
+            # then only one occurance of interpolation will exist
+            # less coding good :)
+            if have_lineA:
+                key, key_other = keyA, keyB
+                intrp = intrpB
+                intrptarget = packetB
+            if have_lineB:
+                key, key_other = keyB, keyA
+                intrp = intrpA
+                intrptarget = packetA
+            singlepoint = [message['TimeUS'], message[key]]
+
+            # interpolation time... step 1: work out the line segment to use
+            # first, do we actually need to update it?
+            pointB = intrp[1]
+            nxt = self._find_next_packet(messages, intrptarget, start=idx)
+            if nxt is None:
+                return
+            nxt = nxt.to_dict()
+            # determine if the next packet is newer than the last used
+            # right-side interpolation packet
+            if nxt['TimeUS'] > pointB[0]:
+                intrp[0] = intrp[1]
+                intrp[1] = [nxt['TimeUS'], nxt[key_other]]
+            # we've now sorted out the endpoints of the line segment, now need
+            # to do the interpolation itself.  standard point-slope form.
+            m = (intrp[1][1] - intrp[0][1]) / (intrp[1][0] - intrp[0][0])
+            y = m * (singlepoint[0] - intrp[0][0]) + intrp[0][1]
+            # we have the second point to compare!  now hand off to the stats
+            # method
+            self._rolling_stats(singlepoint[1], y)
+
+            self.handler.notify_work_done(self.percent_scale)
 
     def _msgs_nearest(self, messages):
         raise NotImplemented("Doesn't have that yet, sorry")
