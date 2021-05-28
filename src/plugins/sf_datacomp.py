@@ -343,10 +343,14 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
             if message is None:
                 self.handler.notify_work_done(self.percent_scale)
                 return
+            message = message.to_dict()
 
             # first, figure out which message we have
             have_lineA = message['mavpackettype'] == packet_A
             have_lineB = message['mavpackettype'] == packet_B
+            # and if we have neither, skip this message
+            if not (have_lineA or have_lineB):
+                continue
 
             # update the most-recent values and make skip first packet to make
             # sure we don't deal with values that don't make sense
