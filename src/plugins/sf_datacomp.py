@@ -8,6 +8,7 @@ Same file data comparison plugin.
 import tkinter as tk
 import tkinter.ttk as ttk
 import functools
+import math
 import src.plugins.pluginbase as pluginbase
 import src.logutils.DFWriter as dfwriter
 
@@ -207,7 +208,7 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
 
         self.data = {
                 'rawdiff': [],
-                'avg-avg': [],
+                'avg-avg': 0,
                 'mindiff': 2e32,
                 'maxdiff': -2e32,
                 'avgdiff': 0,
@@ -306,7 +307,7 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
                     (self._n_points + 1)
             self._rolling_avgA = newA
             self._rolling_avgB = newB
-            self.data['avg-avg'].append(newB - newA)
+            self.data['avg-avg'] = newB - newA
 
 
     def _msgs_same(self, messages):
@@ -438,10 +439,12 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
                 if nxt['TimeUS'] != intrp[1][0]:
                     intrp[0] = intrp[1]
                     intrp[1] = [nxt['TimeUS'], nxt[key_other]]
+
             # we've now sorted out the endpoints of the line segment, now need
             # to do the interpolation itself.  standard point-slope form.
             m = (intrp[1][1] - intrp[0][1]) / (intrp[1][0] - intrp[0][0])
             y = m * (singlepoint[0] - intrp[0][0]) + intrp[0][1]
+
             # we have the second point to compare!  now hand off to the stats
             # method
             self._rolling_stats(singlepoint[1], y)
@@ -453,5 +456,21 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
         raise NotImplemented("Doesn't have that yet, sorry")
 
     def _publish_results(self):
-        print(self.data)
+        dct = {
+                'lineA': self.lineA,
+                'lineB': self.lineB,
+                'method': self.mode,
+                'data': self.data,
+                }
+        self.coopdata['sfdc-{}'.format(self.uuid)] = dct
+
+    def _disp_results(self):
+        window = tk.Toplevel(self.handler.handler.root)
+        detailsbox = tk.Text(window, height=21, width=80)
+        detailsbox.grid(row=0, column=0, sticky='nesw')
+        fmtd_details = ""
+        for flag, val in self.flags.items():
+            if val:
+                fmtd_details += "{}: {}\n".format(flag, self.data[flag])
+        detailsbox.insert('1.0', fmtd_details)
 
