@@ -207,7 +207,7 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
 
         self.data = {
                 'rawdiff': [],
-                'avg-avg-': [],
+                'avg-avg': [],
                 'mindiff': 2e32,
                 'maxdiff': -2e32,
                 'avgdiff': 0,
@@ -371,7 +371,7 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
             # update progress bar
             self.handler.notify_work_done(self.percent_scale)
 
-    def _find_next_packet(self, messages, targettype, start=0):
+    def _find_next_packet(self, messages, targettype, start=0, after=0):
         """
         Look ahead in the message list to find the next packet of a given
         type.
@@ -380,13 +380,14 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
             if message is None:
                 return None
             if message.fmt.name == targettype:
-                return message
+                if message.TimeUS > after:
+                    return message
         return None
 
     def _msgs_lininterp(self, messages):
         # set up some storage for iterations and cycle reduction
-        intrpA = [[0, 0], [0, 0]]
-        intrpB = [[0, 0], [0, 0]]
+        intrpA = [[0, 0], [1, 0]]
+        intrpB = [[0, 0], [1, 0]]
         keyA = self.lineA[1]
         keyB = self.lineB[1]
         packetA = self.lineA[0]
@@ -423,16 +424,20 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
 
             # interpolation time... step 1: work out the line segment to use
             # first, do we actually need to update it?
-            pointB = intrp[1]
-            nxt = self._find_next_packet(messages, intrptarget, start=idx)
-            if nxt is None:
-                return
-            nxt = nxt.to_dict()
             # determine if the next packet is newer than the last used
             # right-side interpolation packet
-            if nxt['TimeUS'] > pointB[0]:
-                intrp[0] = intrp[1]
-                intrp[1] = [nxt['TimeUS'], nxt[key_other]]
+            if not (intrp[0][0] < singlepoint[0] < intrp[1][0]):
+                nxt = self._find_next_packet(messages, intrptarget, start=idx,
+                        after=intrp[1][0])
+                if nxt is None:
+                    return
+                nxt = nxt.to_dict()
+                # make sure the points aren't going to be the same
+                # this happens in early processing, and causes divide-by-zero
+                # later on in calculating m
+                if nxt['TimeUS'] != intrp[1][0]:
+                    intrp[0] = intrp[1]
+                    intrp[1] = [nxt['TimeUS'], nxt[key_other]]
             # we've now sorted out the endpoints of the line segment, now need
             # to do the interpolation itself.  standard point-slope form.
             m = (intrp[1][1] - intrp[0][1]) / (intrp[1][0] - intrp[0][0])
@@ -441,6 +446,7 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
             # method
             self._rolling_stats(singlepoint[1], y)
 
+            idx += 1
             self.handler.notify_work_done(self.percent_scale)
 
     def _msgs_nearest(self, messages):
