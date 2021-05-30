@@ -6,7 +6,7 @@ the packets to allow for more control over the removal.
 
 ## Options
 
-## Specificity
+### Specificity
 
 Replace/overwrite options:
 
@@ -23,14 +23,14 @@ Replace/overwrite options:
   `Overwrite selected parts of packet` is active.  In general, it is best to
   leave this set to zero.
 
-## Filter mode
+### Filter mode
 
 The filter mode allows for easy inversion of the remover.  If the whitelist
 option is selected, then the output log will contain *only* the messages
 specified below.  If the blacklist option is selected, the output log will have
 the below entered packets removed.
 
-## Message data filter
+### Message data filter
 
 This text box allows specification of which messages are being removed or
 altered in the logs.  The syntax is that of a general Python multi-line regular
