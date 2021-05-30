@@ -468,6 +468,8 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
         window = tk.Toplevel(self.handler.handler.root)
         detailsbox = tk.Text(window, height=21, width=80)
         detailsbox.grid(row=0, column=0, sticky='nesw')
+        window.grid_rowconfigure(0, weight=1)
+        window.grid_columnconfigure(0, weight=1)
         fmtd_details = ""
         for flag, val in self.flags.items():
             if val:
