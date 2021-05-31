@@ -594,7 +594,8 @@ class DFReader(object):
 
     def recv_msg(self):
         message = self._parse_next()
-        self.all_messages.append(message)
+        if not message is None:
+            self.all_messages.append(message)
         return message
 
     def _add_msg(self, m):
