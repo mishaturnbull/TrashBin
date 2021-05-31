@@ -249,6 +249,8 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
     def _rolling_stats(self, fieldB, fieldA):
         self._n_points += 1
         newpoint = fieldB - fieldA
+        if self.debug:
+            print("Stats on {} - {} = {}".format(fieldB, fieldA, newpoint))
 
         # keep track of raw differences
         # this one is special-cased as a list rather than a single value
@@ -428,8 +430,8 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
             # determine if the next packet is newer than the last used
             # right-side interpolation packet
             if not (intrp[0][0] < singlepoint[0] < intrp[1][0]):
-                nxt = self._find_next_packet(messages, intrptarget, start=idx,
-                        after=intrp[1][0])
+                nxt = self._find_next_packet(messages, intrptarget,
+                        start=idx//2, after=intrp[1][0])
                 if nxt is None:
                     return
                 nxt = nxt.to_dict()
@@ -440,14 +442,32 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
                     intrp[0] = intrp[1]
                     intrp[1] = [nxt['TimeUS'], nxt[key_other]]
 
+                # make sure that we don't get any weirdness with lines
+                # stretching back to the origin.  logs generally don't begin at
+                # t=0, so we'll backfill the first line segment at the same
+                # y value
+                if intrp[0][0] <= 1:
+                    intrp[0] = [2, intrp[1][1]]
+
             # we've now sorted out the endpoints of the line segment, now need
             # to do the interpolation itself.  standard point-slope form.
             m = (intrp[1][1] - intrp[0][1]) / (intrp[1][0] - intrp[0][0])
             y = m * (singlepoint[0] - intrp[0][0]) + intrp[0][1]
 
+            if self.debug:
+                print("intrpA: {}\nintrpB: {}\nintrp is intrpA? {}".format(
+                    intrpA, intrpB, intrp is intrpA))
+                print("singlepoint: {}\nm = {}, y = {}".format(
+                    singlepoint, m, y))
+
             # we have the second point to compare!  now hand off to the stats
-            # method
-            self._rolling_stats(singlepoint[1], y)
+            # method.  need to be careful about point order here -- otherwise,
+            # every other point will negate the one before and everything
+            # collapses
+            if have_lineA:
+                self._rolling_stats(singlepoint[1], y)
+            else:
+                self._rolling_stats(y, singlepoint[1])
 
             idx += 1
             self.handler.notify_work_done(self.percent_scale)
