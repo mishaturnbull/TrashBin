@@ -284,7 +284,7 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
             # divide-by-zero on the first point
             # setting the stddev early is fine, it'll just get overridden as
             # more data comes in
-            if self._n_points <= 2:
+            if self._n_points >= 2:
                 self.data['stddev'] = math.sqrt(self.S / (self._n_points - 1))
 
         # update a rolling root-mean-square of the differences
@@ -465,9 +465,9 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
             # every other point will negate the one before and everything
             # collapses
             if have_lineA:
-                self._rolling_stats(singlepoint[1], y)
-            else:
                 self._rolling_stats(y, singlepoint[1])
+            else:
+                self._rolling_stats(singlepoint[1], y)
 
             idx += 1
             self.handler.notify_work_done(self.percent_scale)
@@ -541,9 +541,9 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
             # do the comparison!  as with lininterp, have to smoothly handle
             # comparison order or all the math collapses
             if have_lineA:
-                self._rolling_stats(singlepoint[1], compare[1])
-            else:
                 self._rolling_stats(compare[1], singlepoint[1])
+            else:
+                self._rolling_stats(singlepoint[1], compare[1])
             idx += 1
 
     def _publish_results(self):
