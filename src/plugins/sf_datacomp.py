@@ -473,7 +473,78 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
             self.handler.notify_work_done(self.percent_scale)
 
     def _msgs_nearest(self, messages):
-        raise NotImplemented("Doesn't have that yet, sorry")
+        # set up some reused vars
+        lrA = [[0, 0], [1, 0]]
+        lrB = [[0, 0], [1, 0]]
+        singlepoint = [0, 0]
+        compare = [0, 0]
+        keyA = self.lineA[1]
+        keyB = self.lineB[1]
+        packetA = self.lineA[0]
+        packetB = self.lineB[0]
+        idx = 0
+
+        # lets'a gooo!
+        for message in messages:
+            # first off - sanity check packet.  do we want it?
+            if message is None:
+                self.handler.notify_work_done(self.percent_scale)
+                return
+            message = message.to_dict()
+
+            # do we have one of our messages
+            have_lineA = message['mavpackettype'] == packetA
+            have_lineB = message['mavpackettype'] == packetB
+            if not (have_lineA or have_lineB):
+                # not interested in other messages
+                continue
+
+            # we'll follow the same pattern as lininterp, switching out variable
+            # names to reduce duplicate code
+            if have_lineA:
+                leftright = lrB
+                key = keyA
+                packet_other = packetB
+                key_other = keyB
+            else:
+                leftright = lrA
+                key = keyB
+                packet_other = packetA
+                key_other = keyB
+            singlepoint = [message['TimeUS'], message[key]]
+
+            # figure out if we need to switch endpoints, and if so, do it
+            if not (leftright[0][0] <= singlepoint[0] <= leftright[1][0]):
+                nxt = self._find_next_packet(messages, packet_other,
+                        start=idx//2, after=leftright[1][0])
+                if nxt is None:
+                    return
+                nxt = nxt.to_dict()
+                # make sure the points aren't going to be the same
+                # this happens in early processing, and causes divide-by-zero
+                # later on in calculating m
+                if nxt['TimeUS'] != leftright[1][0]:
+                    leftright[0] = leftright[1]
+                    leftright[1] = [nxt['TimeUS'], nxt[key_other]]
+
+            # calculate the midpoint
+            span = leftright[1][0] - leftright[0][0]
+            middle = (span / 2) + leftright[0][0]
+
+            # see which side we're on, and lock onto that point as the
+            # one to compare with
+            if singlepoint[0] <= middle:
+                compare = leftright[0]
+            else:
+                compare = leftright[1]
+
+            # do the comparison!  as with lininterp, have to smoothly handle
+            # comparison order or all the math collapses
+            if have_lineA:
+                self._rolling_stats(singlepoint[1], compare[1])
+            else:
+                self._rolling_stats(compare[1], singlepoint[1])
+            idx += 1
 
     def _publish_results(self):
         dct = {
