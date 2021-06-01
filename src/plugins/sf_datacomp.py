@@ -205,6 +205,8 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
         self.same_packet = self.lineA[0] == self.lineB[0]
         self._n_points = 0
         self.percent_scale = 100
+        self._total_done = 0
+        self._rnd_total_done = 0
 
         self.data = {
                 'rawdiff': [],
@@ -227,6 +229,12 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
 
     def run_filename(self, filename):
         self.infilename = filename
+
+    def notify_work_done(self, n=0):
+        self._total_done += n
+        if self._total_done >= (self._rnd_total_done + 1):
+            self._rnd_total_done += 1
+            self.handler.notify_work_done(1)
 
     def run_messages(self, messages):
         # work out the scale factor for percentage first
@@ -311,12 +319,9 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
             self._rolling_avgB = newB
             self.data['avg-avg'] = newB - newA
 
-
     def _msgs_same(self, messages):
         for message in messages:
-            if message is None:
-                self.handler.notify_work_done(self.percent_scale)
-                return
+            self.notify_work_done(self.percent_scale)
             message = message.to_dict()
             if message['mavpackettype'] != self.lineA[0]:
                 continue
@@ -325,7 +330,6 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
             fieldB = message[self.lineB[1]]
             self._rolling_stats(fieldB, fieldA)
 
-            self.handler.notify_work_done(self.percent_scale)
 
     def _msgs_mostrecent(self, messages):
         # set up some initial values
@@ -343,9 +347,7 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
         assert packet_A != packet_B, "Should be using _msgs_same!"
 
         for message in messages:
-            if message is None:
-                self.handler.notify_work_done(self.percent_scale)
-                return
+            self.notify_work_done(self.percent_scale)
             message = message.to_dict()
 
             # first, figure out which message we have
@@ -370,9 +372,6 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
             
             # invoke the stats counter!
             self._rolling_stats(last_val_B, last_val_A)
-            
-            # update progress bar
-            self.handler.notify_work_done(self.percent_scale)
 
     def _find_next_packet(self, messages, targettype, start=0, after=0):
         """
@@ -399,10 +398,7 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
 
         # lets'a gooo!
         for message in messages:
-            # first off - sanity check packet.  do we want it?
-            if message is None:
-                self.handler.notify_work_done(self.percent_scale)
-                return
+            self.notify_work_done(self.percent_scale)
             message = message.to_dict()
 
             # do we have one of our messages
@@ -470,7 +466,6 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
                 self._rolling_stats(singlepoint[1], y)
 
             idx += 1
-            self.handler.notify_work_done(self.percent_scale)
 
     def _msgs_nearest(self, messages):
         # set up some reused vars
@@ -486,10 +481,7 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
 
         # lets'a gooo!
         for message in messages:
-            # first off - sanity check packet.  do we want it?
-            if message is None:
-                self.handler.notify_work_done(self.percent_scale)
-                return
+            self.notify_work_done(self.percent_scale)
             message = message.to_dict()
 
             # do we have one of our messages
