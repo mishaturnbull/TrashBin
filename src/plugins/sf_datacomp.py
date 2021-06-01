@@ -404,6 +404,7 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
             have_lineB = message['mavpackettype'] == packetB
             if not (have_lineA or have_lineB):
                 # not interested in other messages
+                idx += 1
                 continue
 
             # to reduce duplicate code, we'll do some variable reassignment
@@ -425,7 +426,7 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
             # right-side interpolation packet
             if not (intrp[0][0] < singlepoint[0] < intrp[1][0]):
                 nxt = self._find_next_packet(messages, intrptarget,
-                        start=idx//2, after=intrp[1][0])
+                        start=idx-1, after=intrp[1][0])
                 if nxt is None:
                     return
                 nxt = nxt.to_dict()
@@ -481,6 +482,7 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
             have_lineB = message['mavpackettype'] == packetB
             if not (have_lineA or have_lineB):
                 # not interested in other messages
+                idx += 1
                 continue
 
             # we'll follow the same pattern as lininterp, switching out variable
@@ -500,7 +502,7 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
             # figure out if we need to switch endpoints, and if so, do it
             if not (leftright[0][0] <= singlepoint[0] <= leftright[1][0]):
                 nxt = self._find_next_packet(messages, packet_other,
-                        start=idx//2, after=leftright[1][0])
+                        start=idx-1, after=leftright[1][0])
                 if nxt is None:
                     return
                 nxt = nxt.to_dict()
