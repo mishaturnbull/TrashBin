@@ -41,6 +41,7 @@ class TBPluginFactory(object):
         self.uuid = str(uuid.uuid4())
         self.handler = handler
         self.is_active = False
+        self.debug = self.handler.debug.get()
 
     @property
     def work_per_file(self):
@@ -104,6 +105,7 @@ class TrashBinPlugin(object):
         self._uuid = uuid.uuid4()
         self.handler = handler
         self.processor = processor
+        self.debug = self.handler.debug
 
     @property
     def uuid(self):
