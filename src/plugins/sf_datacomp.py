@@ -538,6 +538,8 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
                 'lineB': self.lineB,
                 'method': self.mode,
                 'data': self.data,
+                'filename': self.infilename,
+                'num_points': self._n_points,
                 }
         self.coopdata['sfdc-{}'.format(self.uuid)] = dct
 
