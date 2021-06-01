@@ -379,8 +379,6 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
         type.
         """
         for message in messages[start:]:
-            if message is None:
-                return None
             if message.fmt.name == targettype:
                 if message.TimeUS > after:
                     return message
@@ -449,12 +447,6 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
             # to do the interpolation itself.  standard point-slope form.
             m = (intrp[1][1] - intrp[0][1]) / (intrp[1][0] - intrp[0][0])
             y = m * (singlepoint[0] - intrp[0][0]) + intrp[0][1]
-
-            if self.debug:
-                print("intrpA: {}\nintrpB: {}\nintrp is intrpA? {}".format(
-                    intrpA, intrpB, intrp is intrpA))
-                print("singlepoint: {}\nm = {}, y = {}".format(
-                    singlepoint, m, y))
 
             # we have the second point to compare!  now hand off to the stats
             # method.  need to be careful about point order here -- otherwise,
@@ -551,11 +543,23 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
         window = tk.Toplevel(self.handler.handler.root)
         detailsbox = tk.Text(window, height=21, width=80)
         detailsbox.grid(row=0, column=0, sticky='nesw')
+        scrollbar = tk.Scrollbar(window)
+        scrollbar.grid(row=0, column=1, sticky='nes')
+        detailsbox.config(yscrollcommand=scrollbar.set)
+        scrollbar.config(command=detailsbox.yview)
         window.grid_rowconfigure(0, weight=1)
         window.grid_columnconfigure(0, weight=1)
         fmtd_details = ""
+        details = {
+            "filename": self.infilename,
+            "lineA": '.'.join(self.lineA),
+            "lineB": '.'.join(self.lineB),
+            "num_points": self._n_points,
+            }
         for flag, val in self.flags.items():
             if val:
-                fmtd_details += "{}: {}\n".format(flag, self.data[flag])
+                details.update({flag: self.data[flag]})
+        for key, val in details.items():
+            fmtd_details += "{} = {}\n".format(key, val)
         detailsbox.insert('1.0', fmtd_details)
 
