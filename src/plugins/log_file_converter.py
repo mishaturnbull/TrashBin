@@ -127,5 +127,7 @@ class LogConvPlugin(pluginbase.TrashBinPlugin):
         raise NotImplemented
 
     def _conv_to_csv(self, messages):
-        raise NotImplemented
+        # turns out csv files are the same as regular text, but with a
+        # different extension!
+        self._conv_to_text(messages)
 
