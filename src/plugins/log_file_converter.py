@@ -53,7 +53,10 @@ class LogFormatConverter(pluginbase.TBPluginFactory):
                 variable=self.output,
                 value=LFMT_CSV,
             )
-        rb_binary.grid(row=0, column=0, sticky='nw')
+        # to remain commented out until facilities exist for exporting files
+        # in binary format.  doesn't make much sense to advertise a feature
+        # that doesn't work
+        #rb_binary.grid(row=0, column=0, sticky='nw')
         rb_text.grid(row=1, column=0, sticky='nw')
         rb_csv.grid(row=2, column=0, sticky='nw')
 
