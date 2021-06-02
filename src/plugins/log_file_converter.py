@@ -32,7 +32,7 @@ class LogFormatConverter(pluginbase.TBPluginFactory):
 
     @property
     def work_per_file(self):
-        return 10
+        return 1
 
     def start_ui(self, frame):
         self.modeframe = tk.LabelFrame(frame, text='Output type',
@@ -121,6 +121,7 @@ class LogConvPlugin(pluginbase.TrashBinPlugin):
 
     def _conv_to_text(self, messages):
         dfw_t = dfwriter.DFWriter_text(messages, self.outfilename)
+        self.handler.notify_work_done(1)
 
     def _conv_to_binary(self, messages):
         raise NotImplemented
