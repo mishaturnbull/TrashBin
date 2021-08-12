@@ -23,6 +23,34 @@ module.  To be detected, a plugin must:
 4. Contain exactly one class that is a subclass of `pluginbase.TBPluginFactory`
 5. Contain exactly one class that is a subclass of `pluginbase.TrashBinPlugin`
 
+### Why it is the way it is
+
+A note about the single-file requirement... You must have a single (uniquely-
+named) Python file in the appropriate folder in order for it to be detected by
+the automatic plugin search function.  The flow used to detect whether or not
+a given file is a TrashBin plugin is roughly as follows:
+
+1. Find the `TrashBin/src/plugins` folder (if unable, give up and exit).  The
+   details of how this is determined aren't relevant here, but can be seen in
+   the `TrashBin/src/plugins/_plugin_autodetect.py:find_plugins_dir` function.
+2. Recursively list all Python files in the plugin folder; filter out a few
+   known not-modules and files starting with `_`.
+3. Try to import all of those files; discard those that can't be imported.
+4. Import all of them.
+5. Search for, in the module's attributes, objects that meet the following
+   critera (checked in this order):
+   - `isinstance(x, type)` (i.e. is it a defined class rather than a string)
+   - `hasattr(x, '__mro__')` (does it have an MRO we can look at)
+   - `basecls in x.__mro__` (does it have a specified parent class)
+     - `basecls` is either going to be `TrashBinPlugin` or `TBPluginFactory`
+6. It's a plugin file -- add it to our list of plugins and return!
+
+So... as long as you can make at least one file that will fool that flow into
+importing the plugin and factory object, you don't actually need to keep
+everything in one file.  You will, however, need to have at least one file that
+*does* meet that criteria -- then just import your other parts there and join
+it all together.
+
 ## High-level design
 
 TrashBin's plugin architecture revolves around a factory design pattern.  While
