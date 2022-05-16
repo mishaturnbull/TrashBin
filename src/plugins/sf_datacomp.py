@@ -36,6 +36,8 @@ class SFDataCompFactory(pluginbase.TBPluginFactory):
         self.do_coop.set(False)
         self.modevar = tk.IntVar()
         self.modevar.set(0)
+        self.unfloat = tk.BooleanVar()
+        self.unfloat.set(False)
         self.flags = {
                 'mindiff': tk.BooleanVar(),
                 'maxdiff': tk.BooleanVar(),
@@ -57,7 +59,10 @@ class SFDataCompFactory(pluginbase.TBPluginFactory):
 
     @property
     def work_per_file(self):
-        return 100
+        if self.unfloat.get():
+            return 200
+        else:
+            return 100
     
     def check_rms_reqs(self):
         if self.flags['rmsdiff'].get():
@@ -119,6 +124,9 @@ class SFDataCompFactory(pluginbase.TBPluginFactory):
         coopbox = tk.Checkbutton(outframe, text="Coop mode",
                 variable=self.do_coop, onvalue=True, offvalue=False)
         coopbox.grid(row=1, column=0, sticky='nw')
+        unfloatbox = tk.Checkbutton(outframe, text="Round float errors",
+                variable=self.unfloat, onvalue=True, offvalue=False)
+        unfloatbox.grid(row=2, column=0, sticky='nw')
         outframe.grid(row=0, column=1, sticky='nw')
 
         modeframe = tk.LabelFrame(self.oframe, text="Tsync handling", 
@@ -156,6 +164,7 @@ class SFDataCompFactory(pluginbase.TBPluginFactory):
                     self.lineB.get(),
                 ],
                 "mode": self.modevar.get(),
+                "unfloat": self.unfloat.get(),
                 "flags": {k: v.get() for k, v in self.flags.items()}
             }
 
@@ -166,6 +175,7 @@ class SFDataCompFactory(pluginbase.TBPluginFactory):
         self.lineA.set(lines[0])
         self.lineB.set(lines[1])
         self.modevar.set(state['mode'])
+        self.unfloat.set(bool(state['unfloat']))
         for key, val in state['flags'].items():
             self.flags[key].set(val)
 
@@ -181,6 +191,7 @@ class SFDataCompFactory(pluginbase.TBPluginFactory):
                 self.lineA.get(),
                 self.lineB.get(),
                 self.modevar.get(),
+                self.unfloat.get(),
                 {k: v.get() for k, v in self.flags.items()},
             )
         return plug
@@ -191,7 +202,8 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
     Does the data comparison work.
     """
     
-    def __init__(self, handler, processor, popup, coop, A, B, mode, flags):
+    def __init__(self, handler, processor, popup, coop, A, B, mode, unfloat, 
+            flags):
         super().__init__(handler, processor)
         self.popup = popup
         self.coop = coop
@@ -200,6 +212,7 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
         self.lineB = B.split('.')
         self.diffpoints = []
         self.mode = mode
+        self.unfloat = unfloat
         self.flags = flags
         self.data = {}
         self.same_packet = self.lineA[0] == self.lineB[0]
@@ -238,7 +251,10 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
 
     def run_messages(self, messages):
         # work out the scale factor for percentage first
-        self.percent_scale = 100 / len(messages)
+        if self.unfloat:
+            self.percent_scale = 200 / len(messages)
+        else:
+            self.percent_scale = 100 / len(messages)
 
         if self.same_packet:
             self._msgs_same(messages)
@@ -248,6 +264,9 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
             self._msgs_lininterp(messages)
         elif self.mode == 2:
             self._msgs_nearest(messages)
+
+        if self.unfloat:
+            self._unfloat_results()
 
         if self.coop:
             self._publish_results()
@@ -531,6 +550,11 @@ class SFDataCompPlugin(pluginbase.TrashBinPlugin):
             else:
                 self._rolling_stats(singlepoint[1], compare[1])
             idx += 1
+
+    def _unfloat_results(self):
+        for i in range(self._n_points):
+            self.notify_work_done(self.percent_scale)
+            self.data['rawdiff'][i] = round(self.data['rawdiff'][i], 8)
 
     def _publish_results(self):
         dct = {
