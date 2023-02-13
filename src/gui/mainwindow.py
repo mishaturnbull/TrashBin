@@ -17,6 +17,8 @@ import src.logutils.DFReader as dfr
 import src.plugins._plugin_autodetect as _pad
 import src.plugins.persist as persist
 import src.gui.pluginloader as pluginloader
+import src.config.config as config
+import src.gui.configui as configui
 
 # the processor selection isn't as user-importable as plugins, we just import
 # them all and then pick
@@ -37,6 +39,8 @@ class MainPanelUI(object):
         self.pbar_var.set(0)
         self._plugui = None
         self.factmap = {}
+
+        self.config = config.Configuration()
 
         self.spawn_ui()
         self.processor = singlethread.SingleThreadProcessor(self)
@@ -179,6 +183,13 @@ class MainPanelUI(object):
         """
         self.available_factories = _pad.plugin_list()[1]
         plp = pluginloader.PluginLoaderPanel(self, self.available_factories)
+
+    def cb_open_config(self):
+        """
+        Callback to open configuration sub-UI.
+        Actual UI is provided by the configui module.
+        """
+        configui.ConfigurationEditorPanel(self)
 
     def cb_rm_plugs(self):
         """
@@ -337,6 +348,8 @@ class MainPanelUI(object):
                 variable=self.debug)
         menu_opts.add_command(label="Processing options",
                 command=self.cb_procoptions)
+        menu_opts.add_command(label="Configuration",
+                command=self.cb_open_config)
 
         self.root.config(menu=self.menu)
 

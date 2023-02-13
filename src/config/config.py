@@ -32,6 +32,10 @@ class Configuration(object):
         self._filelock = threading.Lock()
         self._update_data_from_file()
 
+    @property
+    def filename(self):
+        return self._filename
+
     def change_file(self, newname):
         newname = os.path.abspath(os.path.expanduser(newname))
         self._filename = newname
@@ -75,6 +79,12 @@ class Configuration(object):
         cont = item in self._data
         self._datalock.release()
         return cont
+
+    def items(self):
+        return list(self._data.items())
+
+    def data(self):
+        return self._data
 
     def save(self):
         self._flush_data_to_file()
