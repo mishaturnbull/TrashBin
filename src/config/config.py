@@ -9,7 +9,7 @@ import json
 import os
 import threading
 
-DEFAULT_FILENAME = "~/.trashbin.cfg"
+DEFAULT_FILENAME = "~/.trashbin.json"
 
 def create_blank_file(filename):
     with open(filename, 'w') as outfile:
