@@ -15,6 +15,7 @@ import json
 import src.config.config as config
 
 DEFAULT_COL_WIDTH = 180  # pixels
+DEFAULT_ENTRY_WIDTH = 50  # chars
 
 _TYPE_NULL = 0
 _TYPE_STR = 1
@@ -65,14 +66,15 @@ class ConfigurationEditorPanel(object):
 
         btnSave = tk.Button(topframe, text="Save",
                 command=self.cb_save)
-        btnSave.grid(row=0, column=0, sticky='nws')
+        btnSave.grid(row=0, column=0, sticky='news')
         btnLoad = tk.Button(topframe, text="Load",
                 command=self.cb_load)
-        btnLoad.grid(row=0, column=1, sticky='nesw')
+        btnLoad.grid(row=0, column=1, sticky='news')
         btnPick = tk.Button(topframe, text="Select file",
                 command=self.cb_pick)
-        btnPick.grid(row=0, column=2, sticky='nes')
-        entryFile = tk.Entry(topframe, textvariable=self.uifilepath)
+        btnPick.grid(row=0, column=2, sticky='nwes')
+        entryFile = tk.Entry(topframe, textvariable=self.uifilepath,
+                width=DEFAULT_ENTRY_WIDTH)
         entryFile.grid(row=1, column=0, columnspan=3, sticky='nesw')
 
         self.tree = ttk.Treeview(treeframe)
@@ -132,6 +134,10 @@ class ConfigurationEditorPanel(object):
         if self.parent.config['debug']:
             self.pathlbl = tk.Label(editframe)
             self.pathlbl.grid(row=6, column=0, columnspan=2, sticky='esw')
+
+        topframe.grid_columnconfigure(0, weight=1, uniform='b')
+        topframe.grid_columnconfigure(1, weight=1, uniform='b')
+        topframe.grid_columnconfigure(2, weight=1, uniform='b')
 
         topframe.grid(row=0, column=0, sticky='nesw')
         treeframe.grid(row=1, column=0, sticky='nesw')
