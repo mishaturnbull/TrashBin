@@ -55,6 +55,8 @@ class ConfigurationEditorPanel(object):
 
     def spawn_ui(self):
         self.root = tk.Toplevel(self.parent.root)
+        self.root.wait_visibility()
+        self.root.grab_set()
         self.root.resizable(True, True)
 
         topframe = tk.Frame(self.root)
