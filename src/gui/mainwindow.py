@@ -33,8 +33,6 @@ class MainPanelUI(object):
     def __init__(self):
         self.available_factories = []
         self.root = tk.Tk()
-        self.debug = tk.BooleanVar()
-        self.debug.set(False)
         self.pbar_var = tk.IntVar()
         self.pbar_var.set(0)
         self._plugui = None
@@ -86,7 +84,7 @@ class MainPanelUI(object):
 
         self.root.resizable(False, False)
 
-        if self.debug.get():
+        if self.config['debug']:
             print("UI setup complete")
 
     def cb_save_plugins(self):
@@ -100,11 +98,11 @@ class MainPanelUI(object):
                 ),
             )
         if os.path.splitext(filename)[1].endswith('tbz'):
-            if self.debug.get():
+            if self.config['debug']:
                 print("Saving to zip-wrapped file")
             persist.write_zip_file(filename, list(self.factmap.values()))
         else:
-            if self.debug.get():
+            if self.config['debug']:
                 print("Saving to JSON file")
             persist.write_text_file(filename, list(self.factmap.values()))
 
@@ -120,14 +118,14 @@ class MainPanelUI(object):
                 ),
             )
         if os.path.splitext(filename)[1].endswith("tbz"):
-            if self.debug.get():
+            if self.config['debug']:
                 print("Reading zip-wrapped file")
             factories = persist.load_zip_file(filename, self)
         else:
-            if self.debug.get():
+            if self.config['debug']:
                 print("Reading JSON file")
             factories = persist.load_text_file(filename, self)
-        if self.debug.get():
+        if self.config['debug']:
             print("Got list of factories: {}".format(factories))
         for factory in factories:
             self.factmap.update({factory.uuid: factory})
@@ -253,11 +251,11 @@ class MainPanelUI(object):
         """
         Callback to handle the start(/stop) button press.
         """
-        if self.debug.get():
+        if self.config['debug']:
             print("Handling go button")
         if not self.processor.active:
             # start
-            if self.debug.get():
+            if self.config['debug']:
                 print("Starting processor")
             self.processor.update()
             self.processor.reinit()
@@ -284,12 +282,12 @@ class MainPanelUI(object):
             idx = None
         # first thing to do is destroy the old ui if it's still up
         if not (self._plugui is None):
-            if self.debug.get():
+            if self.config['debug']:
                 print("Removing old plugin UI")
             try:
                 self._plugui.stop_ui(self.frame3)
             except Exception as e:
-                if self.debug.get():
+                if self.config['debug']:
                     raise
                 else:
                     pass
@@ -308,12 +306,12 @@ class MainPanelUI(object):
                 self._plugui = val
                 break
         # mark as active & setup new factory UI!
-        if self.debug.get():
+        if self.config['debug']:
             print("Starting new plugin UI")
         try:
             self._plugui.start_ui(self.frame3)
         except:
-            if self.debug.get():
+            if self.config['debug']:
                 raise
             else:
                 pass
@@ -343,9 +341,6 @@ class MainPanelUI(object):
         menu_file.add_command(label="Load plugin configuration",
                 command=self.cb_load_plugins)
         
-        menu_opts.add_checkbutton(label="Debug",
-                onvalue=1, offvalue=0,
-                variable=self.debug)
         menu_opts.add_command(label="Processing options",
                 command=self.cb_procoptions)
         menu_opts.add_command(label="Configuration",

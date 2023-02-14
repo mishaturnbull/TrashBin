@@ -44,6 +44,7 @@ class Configuration(object):
     def _update_data_from_file(self):
         self._datalock.acquire()
         self._filelock.acquire()
+        self._data = {}
         with open(self._filename, 'r') as datafile:
             string = datafile.read()
         self._data = json.loads(string)
