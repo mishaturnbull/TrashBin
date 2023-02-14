@@ -34,7 +34,7 @@ _TYPE_CONVS = [
         str,
         conv_num,
         json.loads,
-        list,
+        lambda x: [x],
         lambda x: False if (x == 'False') else bool(x)
     ]
 
