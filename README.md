@@ -41,11 +41,12 @@ a factory object to store and always return the same instance of a plugin,
 which means that a plugin can support reading multiple files (and all of the
 capabilites that come with that, such as data correlation between flights).
 
-Although not trivial at this time, the ability for multiple plugins to easily
-cooperate with each other is in the plans for the near future, along with
-much more efficient implementations of multithreading-based execution.
+As long as the individual plugins are written with the intent, TrashBin fully
+supports cooperative plugins, allowing easy cross-plugin data exchange via a
+shared read/write namespace.
 
-Documentation is... not really there yet.  But it's coming, I promise!
+Documentation is... not really there yet.  But it's coming, I promise!  Check
+the `feature/docs` branch!
 
 ## Prerequisites
 
