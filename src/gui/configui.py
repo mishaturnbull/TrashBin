@@ -10,6 +10,7 @@ import tkinter.filedialog as tkfd
 import tkinter.messagebox as tkmb
 from tkinter import ttk
 import uuid
+import json
 
 import src.config.config as config
 
@@ -32,7 +33,7 @@ _TYPE_CONVS = [
         lambda x: None,
         str,
         conv_num,
-        dict,
+        json.loads,
         list,
         lambda x: False if (x == 'False') else bool(x)
     ]
