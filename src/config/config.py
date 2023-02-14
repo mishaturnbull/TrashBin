@@ -32,6 +32,9 @@ class Configuration(object):
         self._filelock = threading.Lock()
         self._update_data_from_file()
 
+        if self['debug']:
+            print("Configuration file has been read")
+
     @property
     def filename(self):
         return self._filename

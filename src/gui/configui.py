@@ -73,8 +73,7 @@ class ConfigurationEditorPanel(object):
         btnPick = tk.Button(topframe, text="Select file",
                 command=self.cb_pick)
         btnPick.grid(row=0, column=2, sticky='nwes')
-        entryFile = tk.Entry(topframe, textvariable=self.uifilepath,
-                width=DEFAULT_ENTRY_WIDTH)
+        entryFile = tk.Entry(topframe, textvariable=self.uifilepath)
         entryFile.grid(row=1, column=0, columnspan=3, sticky='nesw')
 
         self.tree = ttk.Treeview(treeframe)
