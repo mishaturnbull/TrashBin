@@ -130,9 +130,16 @@ class ConfigurationEditorPanel(object):
         valEntry = tk.Entry(editframe, textvariable=self.editval)
         valEntry.grid(row=4, column=1, sticky='nesw')
 
+        insFileBtn = tk.Button(editframe, text="Pick file(s) into val",
+                command=self.cb_ins_file)
+        insFileBtn.grid(row=5, column=0, columnspan=2, sticky='new')
+        insDirBtn = tk.Button(editframe, text="Pick folder into val",
+                command=self.cb_ins_dir)
+        insDirBtn.grid(row=6, column=0, columnspan=2, sticky='new')
+
         if self.parent.config['debug']:
             self.pathlbl = tk.Label(editframe)
-            self.pathlbl.grid(row=6, column=0, columnspan=2, sticky='esw')
+            self.pathlbl.grid(row=7, column=0, columnspan=2, sticky='esw')
 
         topframe.grid_columnconfigure(0, weight=1, uniform='b')
         topframe.grid_columnconfigure(1, weight=1, uniform='b')
@@ -141,6 +148,16 @@ class ConfigurationEditorPanel(object):
         topframe.grid(row=0, column=0, sticky='nesw')
         treeframe.grid(row=1, column=0, sticky='nesw')
         editframe.grid(row=0, column=1, sticky='nesw', rowspan=2)
+
+    def cb_ins_file(self):
+        # get a filename from GUI picker and pass it off to the value
+        filename = tkfd.askopenfilenames()
+        self.editval.set(filename)
+
+    def cb_ins_dir(self):
+        # just like cb_ins_file but with directory
+        dirname = tkfd.askdirectory()
+        self.editval.set(dirname)
 
     def cb_selected(self, event):
         try:
