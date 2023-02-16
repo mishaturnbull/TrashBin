@@ -10,7 +10,7 @@ privacy policies - e.g. GPS.\*, GPA.\*, PARAM messages, and others.
 
 <div style="text-align-center">
     <!-- if you're reading this file offline, sorry about the html... -->
-	<img src="https://github.com/mishaturnbull/TrashBin/raw/master/scrnsht1.png"/>
+    <img src="https://github.com/mishaturnbull/TrashBin/raw/feature/docs/docs/scrnshot-mainpg.png"/>
 </div>
 
 ## Built-in plugins
