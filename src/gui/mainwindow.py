@@ -38,7 +38,7 @@ class MainPanelUI(object):
         self._plugui = None
         self.factmap = {}
 
-        self.config = config.Configuration()
+        self.config = config.ConfigManager()
 
         self.spawn_ui()
         self.processor = singlethread.SingleThreadProcessor(self)
