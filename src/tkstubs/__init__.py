@@ -8,5 +8,5 @@ if HAS_DISPLAY:
     import tkinter.messagebox as tkmb
     from tkinter import ttk
 else:
-    import .tkstubs as tk
+    import src.tkstubs as tk
 

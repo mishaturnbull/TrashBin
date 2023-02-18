@@ -3,8 +3,6 @@
 
 """
 Provides stubs for Tkinter variables if running in a non-graphical environment.
-
-Provides the real deal if possible under normal circumstances.
 """
 
 import os
@@ -30,7 +28,7 @@ class Variable(object):
         self.val = val
 
 def _classbuilder(typ):
-    class NewVarType(Variable):
+    class TypeStrictVar(Variable):
         def set(self, val):
             assert isinstance(val, typ), "Tried to assign wrong type to " \
                     "variable expecting {}: {}".format(typ, val)
