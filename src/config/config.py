@@ -112,12 +112,21 @@ class ConfigManager(object):
 class Configuration(object):
 
     def __init__(self, filename, readonly=False, uid=None, zipped=False):
-        self._filename = os.path.abspath(os.path.expanduser(filename))
+        if not (filename is None):
+            self._filename = os.path.abspath(os.path.expanduser(filename))
+        else:
+            self._filename = None
         self._readonly = readonly
         self.zipped = zipped
         self.uuid = uid
         if self.uuid is None:
             self.uuid = str(uuid.uuid4())
+        self._data = {}
+        self._datalock = threading.Lock()
+        self._filelock = threading.Lock()
+
+        if self._filename is None:
+            return
 
         exist = os.path.exists(self._filename)
         if not exist:
@@ -132,9 +141,6 @@ class Configuration(object):
                         "Updating it to match!".format(self._filename))
                 self.zipped = iszip
 
-        self._data = {}
-        self._datalock = threading.Lock()
-        self._filelock = threading.Lock()
         self._update_data_from_file()
 
         if 'debug' in self and self['debug']:
@@ -153,6 +159,9 @@ class Configuration(object):
         self._flush_data_to_file()
 
     def _update_data_from_file(self):
+        if self._filename is None:
+            raise FileNotFoundError("No file backend for this configuration!")
+
         self._datalock.acquire()
         self._filelock.acquire()
 
@@ -169,9 +178,12 @@ class Configuration(object):
         self._datalock.release()
 
     def _flush_data_to_file(self):
+        if self._filename is None:
+            raise FileNotFoundError("No file backend for this configuration!")
         if self._readonly:
             raise AttributeError("Attempted to flush to file on a readonly" \
                     "configuration object!")
+
         self._datalock.acquire()
         self._filelock.acquire()
 
