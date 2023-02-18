@@ -9,12 +9,20 @@ import json
 import os
 import threading
 import uuid
+import zipfile
 
 MASTER_FILENAME = "~/.trashbin-master.json"
+ZIP_INTERNAL_FILENAME = "data.json"
 
-def create_blank_file(filename):
-    with open(filename, 'w') as outfile:
-        json.dump({'__uuid': str(uuid.uuid4())}, outfile, indent=4)
+def create_blank_file(filename, zipped=False):
+    data = {'__uuid': str(uuid.uuid4())}
+    if zipped:
+        with zipfile.ZipFile(filename, 'w') as ziph:
+            ziph.writestr(ZIP_INTERNAL_FILENAME,
+                    json.dumps(data))
+    else:
+        with open(filename, 'w') as datafile:
+            json.dump(data, datafile, indent=4)
 
 
 class ConfigManager(object):
@@ -103,9 +111,10 @@ class ConfigManager(object):
 
 class Configuration(object):
 
-    def __init__(self, filename, readonly=False, uid=None):
+    def __init__(self, filename, readonly=False, uid=None, zipped=False):
         self._filename = os.path.abspath(os.path.expanduser(filename))
         self._readonly = readonly
+        self.zipped = zipped
         self.uuid = uid
         if self.uuid is None:
             self.uuid = str(uuid.uuid4())
@@ -114,7 +123,14 @@ class Configuration(object):
         if not exist:
             print("WARNING: No configuration file found at {}.  Creating one!" \
                     .format(self._filename))
-            create_blank_file(self._filename)
+            create_blank_file(self._filename, self.zipped)
+        else:
+            # make sure the zipped argument matches the file
+            iszip = zipfile.is_zipfile(self._filename)
+            if iszip != self.zipped:
+                print("WARNING: Incorrect `zipped` specified for {}." \
+                        "Updating it to match!".format(self._filename))
+                self.zipped = iszip
 
         self._data = {}
         self._datalock = threading.Lock()
@@ -139,10 +155,16 @@ class Configuration(object):
     def _update_data_from_file(self):
         self._datalock.acquire()
         self._filelock.acquire()
+
         self._data = {}
-        with open(self._filename, 'r') as datafile:
-            string = datafile.read()
-        self._data = json.loads(string)
+        if self.zipped:
+            with zipfile.ZipFile(self._filename, 'r') as ziph:
+                strdata = ziph.read(ZIP_INTERNAL_FILENAME)
+        else:
+            with open(self._filename, 'r') as datafile:
+                strdata = datafile.read()
+        self._data = json.loads(strdata)
+
         self._filelock.release()
         self._datalock.release()
 
@@ -152,8 +174,15 @@ class Configuration(object):
                     "configuration object!")
         self._datalock.acquire()
         self._filelock.acquire()
-        with open(self._filename, 'w') as datafile:
-            json.dump(self._data, datafile, indent=4)
+
+        if self.zipped:
+            with zipfile.ZipFile(self._filename, 'w') as ziph:
+                ziph.writestr(ZIP_INTERNAL_FILENAME,
+                        json.dumps(self._data))
+        else:
+            with open(self._filename, 'w') as datafile:
+                json.dump(self._data, datafile, indent=4)
+
         self._filelock.release()
         self._datalock.release()
 
@@ -190,6 +219,12 @@ class Configuration(object):
 
     def data(self):
         return self._data
+
+    def overridedata(self, newdata):
+        self._datalock.acquire()
+        newdata['__uuid'] = self._data['__uuid']
+        self.data = newdata
+        self._datalock.release()
 
     def save(self):
         self._flush_data_to_file()
