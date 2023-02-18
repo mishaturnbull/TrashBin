@@ -9,6 +9,7 @@ plugin savestates.
 import json
 import zipfile
 import src.plugins._plugin_autodetect as _pad
+import src.config.config as config
 
 ZIP_INTERNAL_FILENAME = "data.tbp"
 
@@ -39,24 +40,23 @@ def load_all_savestates(states, handler):
     return factories
 
 def write_text_file(filename, factories):
-    with open(filename, 'w') as outfile:
-        json.dump(get_all_savestates(factories), outfile, indent=4)
+    cfg = config.Configuration(filename, zipped=False)
+    cfg.overridedata(get_all_savestates(factories))
+    cfg.save()
 
 def load_text_file(filename, handler):
-    with open(filename, 'r') as infile:
-        string = infile.read()
-    savestates = json.loads(string)
+    cfg = config.Configuration(filename, zipped=False)
+    savestates = cfg.data()
     return load_all_savestates(savestates, handler)
 
 def write_zip_file(filename, factories):
-    with zipfile.ZipFile(filename, 'w') as ziph:
-        ziph.writestr(ZIP_INTERNAL_FILENAME,
-            json.dumps(get_all_savestates(factories)))
+    cfg = config.Configuration(filename, zipped=True)
+    cfg.overridedata(get_all_savestates(factories))
+    cfg.save()
 
 def load_zip_file(filename, handler):
-    with zipfile.ZipFile(filename, 'r') as ziph:
-        data = ziph.read(ZIP_INTERNAL_FILENAME)
-    savestates = json.loads(data)
+    cfg = config.Configuration(filename, zipped=True)
+    savestates = cfg.data()
     return load_all_savestates(savestates, handler)
 
 
