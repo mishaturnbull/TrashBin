@@ -10,15 +10,6 @@ before use.
 
 import uuid
 import copy
-import tkinter as tk
-
-class _PickleVar(object):
-    """
-    Tkinter.Variable without the Tkinter.
-    """
-    def __init__(self, varcls, value):
-        self.varcls = varcls
-        self.value = value
 
 class TBPluginFactory(object):
     """
@@ -41,7 +32,7 @@ class TBPluginFactory(object):
         self.uuid = str(uuid.uuid4())
         self.handler = handler
         self.is_active = False
-        self.debug = self.handler.debug.get()
+        self.debug = self.handler.config['debug']
 
     @property
     def work_per_file(self):
