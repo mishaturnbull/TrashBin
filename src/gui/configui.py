@@ -11,10 +11,13 @@ import tkinter.messagebox as tkmb
 from tkinter import ttk
 import uuid
 import json
+import os
 
 import src.config.config as config
 
-DEFAULT_COL_WIDTH = 180  # pixels
+DEFAULT_ITEM_WIDTH = 150
+DEFAULT_TYPE_WIDTH = 90
+DEFAULT_VALUE_WIDTH = 350
 DEFAULT_ENTRY_WIDTH = 50  # chars
 
 _TYPE_NULL = 0
@@ -45,8 +48,11 @@ class ConfigurationEditorPanel(object):
         self.parent = parent
         self.trmap = {}
 
+        self.slotsel = tk.StringVar()
+        self.slotsel.set("Select config...")
+        self.slotsel.trace('w', self.cb_slotsel_changed)
+        self.activeslot = None
         self.uifilepath = tk.StringVar()
-        self.uifilepath.set(self.parent.config.filename)
         self.edittype = tk.IntVar()
         self.edittype.set(_TYPE_NULL)
         self.editkey = tk.StringVar()
@@ -64,17 +70,26 @@ class ConfigurationEditorPanel(object):
         treeframe = tk.Frame(self.root)
         editframe = tk.Frame(self.root)
 
+        self.cbSlot = ttk.Combobox(topframe, textvariable=self.slotsel,
+                values=self.parent.config.slotfilenames)
+        self.cbSlot.grid(row=0, column=0, sticky='news')
+        btnAddSlot = tk.Button(topframe, text="Add to slots",
+                command=self.cb_addslot)
+        btnAddSlot.grid(row=0, column=1, sticky='news')
+        btnRemSlot = tk.Button(topframe, text="Remove slot",
+                command=self.cb_rmslot)
+        btnRemSlot.grid(row=0, column=2, sticky='news')
         btnSave = tk.Button(topframe, text="Save",
                 command=self.cb_save)
-        btnSave.grid(row=0, column=0, sticky='news')
-        btnLoad = tk.Button(topframe, text="Load",
+        btnSave.grid(row=1, column=0, sticky='news')
+        btnLoad = tk.Button(topframe, text="Load / New",
                 command=self.cb_load)
-        btnLoad.grid(row=0, column=1, sticky='news')
+        btnLoad.grid(row=1, column=1, sticky='news')
         btnPick = tk.Button(topframe, text="Select file",
                 command=self.cb_pick)
-        btnPick.grid(row=0, column=2, sticky='nwes')
+        btnPick.grid(row=1, column=2, sticky='nwes')
         entryFile = tk.Entry(topframe, textvariable=self.uifilepath)
-        entryFile.grid(row=1, column=0, columnspan=3, sticky='nesw')
+        entryFile.grid(row=2, column=0, columnspan=4, sticky='nesw')
 
         self.tree = ttk.Treeview(treeframe)
         self.tree.grid(row=0, column=0, sticky='nesw')
@@ -88,9 +103,9 @@ class ConfigurationEditorPanel(object):
         self.tree['show'] = 'tree headings'
         self.tree['selectmode'] = 'browse'
         self.tree.bind('<<TreeviewSelect>>', self.cb_selected)
-        self.tree.column('#0', width=180, anchor='w')
-        self.tree.column('type', width=90)
-        self.tree.column('value', width=180, anchor='e')
+        self.tree.column('#0', width=DEFAULT_ITEM_WIDTH, anchor='w')
+        self.tree.column('type', width=DEFAULT_TYPE_WIDTH)
+        self.tree.column('value', width=DEFAULT_VALUE_WIDTH, anchor='e')
         self.tree.heading('#0', text="Item")
         self.tree.heading('type', text="Type")
         self.tree.heading('value', text="Value")
@@ -159,6 +174,33 @@ class ConfigurationEditorPanel(object):
         dirname = tkfd.askdirectory()
         self.editval.set(dirname)
 
+    def cb_slotsel_changed(self, *args):
+        newname = self.slotsel.get()
+        allfiles = self.parent.config.slotfilenames
+        try:
+            idx = allfiles.index(newname)
+        except ValueError:
+            # no such file
+            self._clear_tree()
+            return
+        self.activeslot = self.parent.config.slots[idx]
+        self.uifilepath.set(self.activeslot.filename)
+        self._reload_after_edit()
+
+    def cb_addslot(self):
+        self.parent.config.load_new_config_from_file(self.uifilepath.get(),
+                readonly=False, permanent=True)
+        self.cbSlot['values'] = self.parent.config.slotfilenames
+        self.slotsel.set(os.path.split(self.uifilepath.get())[1])
+        self._reload_after_edit()
+
+    def cb_rmslot(self):
+        self.parent.config.remove_config_from_slots(self.activeslot)
+        self.cbSlot['values'] = self.parent.config.slotfilenames
+        self.slotsel.set("")
+        self.uifilepath.set("")
+        self._clear_tree()
+
     def cb_selected(self, event):
         try:
             sel = self.tree.selection()[0]
@@ -184,7 +226,7 @@ class ConfigurationEditorPanel(object):
             if item == '':
                 break
 
-        value = self.parent.config.data()
+        value = self.activeslot.data()
         for key in path[::-1]:
             value = value[key]
 
@@ -216,7 +258,7 @@ class ConfigurationEditorPanel(object):
 
     def edit_new(self):
         sel = self.tree.selection()
-        dic = self.parent.config.data()
+        dic = self.activeslot.data()
         if len(sel) > 0:
             # something is selected
             # if it's an array or dictionary, add new element under it
@@ -231,7 +273,7 @@ class ConfigurationEditorPanel(object):
                 dic = dic[key]
 
             if len(self._path) == 0:
-                dic = self.parent.config.data()
+                dic = self.activeslot.data()
 
         newkey = self.editkey.get()
         newval = self.editval.get()
@@ -266,7 +308,7 @@ class ConfigurationEditorPanel(object):
 
     def edit_del(self):
         key = self.editkey.get()
-        dic = self.parent.config.data()
+        dic = self.activeslot.data()
         for key in self._path[::-1]:
             if not (isinstance(dic[key], dict) or \
                     isinstance(dic[key], list)):
@@ -276,13 +318,12 @@ class ConfigurationEditorPanel(object):
 
         self._reload_after_edit()
 
-
     def edit_apply(self):
         val = self.editval.get()
         newkey = self.editkey.get()
         typefunc = _TYPE_CONVS[self.edittype.get()]
 
-        dic = self.parent.config.data()
+        dic = self.activeslot.data()
         for key in self._path[::-1]:
             if not (isinstance(dic[key], dict) or \
                     isinstance(dic[key], list)):
@@ -302,16 +343,19 @@ class ConfigurationEditorPanel(object):
         for sel in self.tree.selection():
             self.tree.selection_remove(sel)
         self._clear_tree()
-        self._insert_items('', self.parent.config.data())
+        self._insert_items('', self.activeslot.data())
 
     def cb_save(self):
-        self.parent.config.save()
+        self.activeslot.save()
 
     def cb_load(self):
         self._clear_tree()
-        self.parent.config.change_file(self.uifilepath.get())
-        self.parent.config.load()
-        configs = self.parent.config.data()
+        if len(self.uifilepath.get()) == 0:
+            return
+        # TODO load up a new config, show its data
+        self.activeslot = config.Configuration(filename=self.uifilepath.get(),
+                readonly=False)
+        configs = self.activeslot.data()
         self._insert_items('', configs)
 
     def _clear_tree(self):
