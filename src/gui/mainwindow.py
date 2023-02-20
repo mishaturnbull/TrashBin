@@ -171,6 +171,9 @@ class MainPanelUI(object):
             self.ui_dirlistbox.delete(i)
         self.mainexec.set_dirs([])
 
+    def cb_rawtextvar_changed(self, *args):
+        self.config.inputs['rawtext'] = self.rawtextentry.get('1.0', tk.END)
+
     def cb_add_plugs(self):
         """
         Callback to load factory(s) from the available plugin list.
@@ -398,13 +401,15 @@ class MainPanelUI(object):
         textframe = tk.Frame(notebook)
         notebook.add(textframe, text="Raw text")
 
-        self.rawtextvar = tk.StringVar()
-        self.rawtextentry = tk.Entry(textframe, textvariable=self.rawtextvar)
+        self.rawtextentry = tk.Text(textframe, height=1, width=1)
         textframe.grid_columnconfigure(0, weight=1)
         textframe.grid_rowconfigure(0, weight=1)
         self.rawtextentry.grid(row=0, column=0, sticky='nesw')
+        textappbtn = tk.Button(textframe, text="Apply",
+                command=self.cb_rawtextvar_changed)
+        textappbtn.grid(row=1, column=0, sticky='news')
 
-    
+
     def spawn_ui_frame2(self):
         """
         Spawns the middle frame for adding/listing plugins
