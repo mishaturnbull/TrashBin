@@ -11,6 +11,7 @@ provides a backend for the GUI if necessary.
 import sys
 import os
 import time
+import uuid
 import tkinter as tk
 import src.config.config as config
 import src.plugins.persist as persist
@@ -37,11 +38,15 @@ class MainExecutor(object):
         self.factmap = {}
         if self.mastercfg.plugins:
             self.add_plugin_by_savedata(self.mastercfg.plugins['factories'])
+        if not self.mastercfg.inputs:
+            inp = config.Configuration(None)
+            inp['filenames'] = []
+            inp['directories'] = []
+            inp['rawtext'] = ""
+            inp['__uuid'] = str(uuid.uuid4())
+            inp['__scope'] = config.SCOPE_INPUTS
+            self.mastercfg.slots.append(inp)
 
-        if self.mastercfg.inputs:
-            self.files = self.mastercfg.inputs['filenames']
-        else:
-            self.files = []
         self.progress = 0
 
         # we've hard-selected a single thread processor for now, because that's
@@ -82,14 +87,14 @@ class MainExecutor(object):
             self._gui.notify_done()
 
     def set_files(self, newfiles):
-        self.files = newfiles
+        self.mastercfg.inputs['filenames'] = newfiles
 
     def add_file(self, newfile):
-        if newfile in self.files:
+        if newfile in self.mastercfg.inputs['filenames']:
             return
-        self.files.append(newfile)
+        self.mastercfg.inputs['filenames'].append(newfile)
 
-    def add_plugin_by_index(self, idx):
+    def add_plug_by_idx(self, idx):
         plugin = _pad.plugin_list()[1][idx]
         instance = plugin(self)
         self.factmap.update({instance.uuid: instance})
@@ -97,14 +102,18 @@ class MainExecutor(object):
 
     def add_plugin_by_savedata(self, data):
         factories = persist.load_all_savestates(data, self)
-        print(factories)
         for factory in factories:
             self.factmap.update({factory.uuid: factory})
-        print(self.factmap)
 
     @property
     def config(self):
         return self.mastercfg
+
+    @property
+    def input(self):
+        if self.mastercfg.inputs:
+            return self.mastercfg.inputs
+        return {'filenames': [], 'directories': [], 'rawtext': []}
 
     @property
     def gui(self):

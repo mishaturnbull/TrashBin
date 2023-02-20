@@ -25,7 +25,9 @@ class ProcessorBase(object):
         self.update()
 
     def update(self):
-        self.input_files = self.handler.files
+        self.input_files = self.handler.input['filenames']
+        self.input_dirs = self.handler.input['directories']
+        self.input_rawtext = self.handler.input['rawtext']
         self.factories = self.handler.factories
 
     @property

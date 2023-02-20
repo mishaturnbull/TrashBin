@@ -51,7 +51,7 @@ class ConfigManager(object):
         # make sure it's not a duplicate
         for slot in self.slots:
            if slot['__uuid'] == config['__uuid']:
-               print("WARNING: Trying to load ocnfig already present as new." \
+               print("WARNING: Trying to load config already present as new." \
                        "  Not re-adding, and triggering config reload " \
                        "instead!")
                slot.load()
@@ -114,7 +114,8 @@ class ConfigManager(object):
     def slotfilenames(self):
         files = []
         for config in self.slots:
-            files.append(os.path.split(config.filename)[1])
+            if config.filename:
+                files.append(os.path.split(config.filename)[1])
         return files
 
     def get_configs_in_scope(self, scope):
@@ -271,7 +272,7 @@ class Configuration(object):
     def overridedata(self, newdata):
         self._datalock.acquire()
         newdata['__uuid'] = self._data['__uuid']
-        self.data = newdata
+        self._data = newdata
         self._datalock.release()
 
     def save(self):

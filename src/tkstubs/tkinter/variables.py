@@ -7,10 +7,6 @@ Provides stubs for Tkinter variables if running in a non-graphical environment.
 
 import os
 
-headless = False
-
-print(os.getenv('_TRASHBIN_OPERMODE'))
-
 def has_display():
     if 'headless' in os.getenv('_TRASHBIN_OPERMODE'):
         return False

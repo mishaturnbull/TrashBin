@@ -95,14 +95,6 @@ class MainPanelUI(object):
                 ),
             )
         self.mainexec.save_plugins(filename)
-        if os.path.splitext(filename)[1].endswith('tbz'):
-            if self.config['debug']:
-                print("Saving to zip-wrapped file")
-            persist.write_zip_file(filename, list(self.mainexec.factmap.values()))
-        else:
-            if self.config['debug']:
-                print("Saving to JSON file")
-            persist.write_text_file(filename, list(self.mainexec.factmap.values()))
 
     def cb_load_plugins(self):
         filename = tkfd.askopenfilename(
@@ -242,12 +234,12 @@ class MainPanelUI(object):
             print("Handling go button")
         if not self.mainexec.active:
             # start
-            self.mainexec.go()
             if self.config['debug']:
                 print("Starting processor")
-            self.pbar['maximum'] = self.processor.max_work
+            self.pbar['maximum'] = self.mainexec.processor.max_work
             self.pbar_var.set(0)
             self.btn_go.config(text="Stop")
+            self.mainexec.go()
         else:
             # inactive
             self.mainexec.stop()
