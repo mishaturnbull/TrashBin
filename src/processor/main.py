@@ -11,6 +11,7 @@ provides a backend for the GUI if necessary.
 import sys
 import os
 import time
+import tkinter as tk
 import src.config.config as config
 import src.plugins.persist as persist
 import src.plugins._plugin_autodetect as _pad
@@ -96,8 +97,10 @@ class MainExecutor(object):
 
     def add_plugin_by_savedata(self, data):
         factories = persist.load_all_savestates(data, self)
+        print(factories)
         for factory in factories:
             self.factmap.update({factory.uuid: factory})
+        print(self.factmap)
 
     @property
     def config(self):
@@ -113,7 +116,7 @@ class MainExecutor(object):
 
     @property
     def factories(self):
-        return self.factmap
+        return self.factmap.values()
 
     def go(self):
         if len(self.factories) == 0:
