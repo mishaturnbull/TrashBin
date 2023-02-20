@@ -15,14 +15,9 @@ import os
 import time
 import src.logutils.DFReader as dfr
 import src.plugins._plugin_autodetect as _pad
-import src.plugins.persist as persist
 import src.gui.pluginloader as pluginloader
 import src.config.config as config
 import src.gui.configui as configui
-
-# the processor selection isn't as user-importable as plugins, we just import
-# them all and then pick
-import src.processor.singlethread as singlethread
 
 
 class MainPanelUI(object):
@@ -30,19 +25,21 @@ class MainPanelUI(object):
     Creates the main 3-panel graphical user inyerface (GUI).
     """
 
-    def __init__(self):
+    def __init__(self, mainexec):
+        self.mainexec = mainexec
         self.available_factories = []
         self.root = tk.Tk()
         self.pbar_var = tk.IntVar()
         self.pbar_var.set(0)
         self._plugui = None
-        self.factmap = {}
 
-        self.config = config.ConfigManager()
-
+    def start(self):
         self.spawn_ui()
-        self.processor = singlethread.SingleThreadProcessor(self)
         self.root.mainloop()
+
+    @property
+    def config(self):
+        return self.mainexec.mastercfg
 
     @property
     def files(self):
@@ -71,7 +68,7 @@ class MainPanelUI(object):
 
     @property
     def factories(self):
-        return self.factmap.values()
+        return self.mainexec.factmap.values()
 
     def spawn_ui(self):
         self.root.title("TrashBin Log Utility")
@@ -97,14 +94,15 @@ class MainPanelUI(object):
                     ("all files", "*.*"),
                 ),
             )
+        self.mainexec.save_plugins(filename)
         if os.path.splitext(filename)[1].endswith('tbz'):
             if self.config['debug']:
                 print("Saving to zip-wrapped file")
-            persist.write_zip_file(filename, list(self.factmap.values()))
+            persist.write_zip_file(filename, list(self.mainexec.factmap.values()))
         else:
             if self.config['debug']:
                 print("Saving to JSON file")
-            persist.write_text_file(filename, list(self.factmap.values()))
+            persist.write_text_file(filename, list(self.mainexec.factmap.values()))
 
     def cb_load_plugins(self):
         filename = tkfd.askopenfilename(
@@ -117,19 +115,7 @@ class MainPanelUI(object):
                     ("all files", "*.*"),
                 ),
             )
-        if os.path.splitext(filename)[1].endswith("tbz"):
-            if self.config['debug']:
-                print("Reading zip-wrapped file")
-            factories = persist.load_zip_file(filename, self)
-        else:
-            if self.config['debug']:
-                print("Reading JSON file")
-            factories = persist.load_text_file(filename, self)
-        if self.config['debug']:
-            print("Got list of factories: {}".format(factories))
-        for factory in factories:
-            self.factmap.update({factory.uuid: factory})
-            self.ui_pluglistbox.insert(tk.END, factory.plugin_name)
+        self.mainexec.load_plugins(filename)
 
     def cb_procoptions(self):
         pass
@@ -138,7 +124,7 @@ class MainPanelUI(object):
         """
         Callback to add file(s) to our input file list.
         """
-        for a, b in self.factmap.items():
+        for a, b in self.mainexec.factmap.items():
             print(a, b.__dict__)
         newfiles = tkfd.askopenfilenames(
                 parent=self.root, title="Log selection",
@@ -201,8 +187,8 @@ class MainPanelUI(object):
         # remove UI elements and cleanup the factory
         self.cb_plugselect(None)
         # now we need to find and remove that one from the factory map
-        targ = list(self.factmap.keys())[i]
-        self.factmap = {k:v for k, v in self.factmap.items() if k != targ}
+        targ = list(self.mainexec.factmap.keys())[i]
+        self.mainexec.factmap = {k:v for k, v in self.mainexec.factmap.items() if k != targ}
 
     def cb_rm_all_plugs(self):
         """
@@ -218,7 +204,7 @@ class MainPanelUI(object):
         for i in range(len(self.factories))[::-1]:
             self.ui_pluglistbox.delete(i)
             self.cb_plugselect(None)
-        self.factmap = {}
+        self.mainexec.factmap = {}
 
     def cb_plug_up(self):
         """
@@ -253,22 +239,18 @@ class MainPanelUI(object):
         """
         if self.config['debug']:
             print("Handling go button")
-        if not self.processor.active:
+        if not self.mainexec.active:
             # start
+            self.mainexec.go()
             if self.config['debug']:
                 print("Starting processor")
-            self.processor.update()
-            self.processor.reinit()
             self.pbar['maximum'] = self.processor.max_work
             self.pbar_var.set(0)
             self.btn_go.config(text="Stop")
-            self.processor.active = True
-            self.processor.run()
         else:
             # inactive
-            self.processor.stop()
+            self.mainexec.stop()
             self.btn_go.config(text="Start")
-            self.processor.active = False
             self.pbar_var.set(0)
 
     def cb_plugselect(self, event):
@@ -301,7 +283,7 @@ class MainPanelUI(object):
             return
         plugname = self.ui_pluglistbox.get(idx)
         # load the real factory - have to search through our .factmap dict
-        for key, val in self.factmap.items():
+        for key, val in self.mainexec.factmap.items():
             if val.plugin_name == plugname:
                 self._plugui = val
                 break

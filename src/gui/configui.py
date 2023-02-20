@@ -352,7 +352,6 @@ class ConfigurationEditorPanel(object):
         self._clear_tree()
         if len(self.uifilepath.get()) == 0:
             return
-        # TODO load up a new config, show its data
         self.activeslot = config.Configuration(filename=self.uifilepath.get(),
                 readonly=False)
         configs = self.activeslot.data()

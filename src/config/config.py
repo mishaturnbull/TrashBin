@@ -10,12 +10,18 @@ import os
 import threading
 import uuid
 import zipfile
+import traceback
 
-MASTER_FILENAME = "~/.trashbin-master.json"
 ZIP_INTERNAL_FILENAME = "data.json"
 
+SCOPE_GLOBAL = 1
+SCOPE_PLUGIN = 2
+SCOPE_INPUTS = 3
+_SCOPE_AUTO = -1
+
 def create_blank_file(filename, zipped=False):
-    data = {'__uuid': str(uuid.uuid4())}
+    data = {'__uuid': str(uuid.uuid4()),
+            '__scope': SCOPE_GLOBAL}
     if zipped:
         with zipfile.ZipFile(filename, 'w') as ziph:
             ziph.writestr(ZIP_INTERNAL_FILENAME,
@@ -27,7 +33,7 @@ def create_blank_file(filename, zipped=False):
 
 class ConfigManager(object):
 
-    def __init__(self, master=MASTER_FILENAME):
+    def __init__(self, master):
         self._master_config = Configuration(master, False, False)
         self.slots = []
 
@@ -38,14 +44,17 @@ class ConfigManager(object):
             self.load_new_config_from_file(slot['filename'], slot['readonly'])
 
     def load_new_config_from_file(self, filename, readonly=False,
-            permanent=True):
+            permanent=True, scope=_SCOPE_AUTO):
         newfilename = os.path.abspath(os.path.expanduser(filename))
         config = Configuration(filename=newfilename, readonly=readonly)
 
         # make sure it's not a duplicate
         for slot in self.slots:
            if slot['__uuid'] == config['__uuid']:
-               print("HIT")
+               print("WARNING: Trying to load ocnfig already present as new." \
+                       "  Not re-adding, and triggering config reload " \
+                       "instead!")
+               slot.load()
                return
 
         self.slots.append(config)
@@ -108,6 +117,26 @@ class ConfigManager(object):
             files.append(os.path.split(config.filename)[1])
         return files
 
+    @property
+    def plugins(self):
+        # first, make sure we have only one at most
+        # we will use the same loop to identify the index of the slot to return
+        counter = 0
+        idx = -1
+        i = 0
+        for config in self.slots:
+            if config['__scope'] == SCOPE_PLUGIN:
+                counter += 1
+                idx = i
+            i += 1
+        assert counter < 2, "Multiple SCOPE_PLUGIN(={}) configs specified: {}" \
+                .format(SCOPE_PLUGIN, counter)
+        assert idx >= 0, "No SCOPE_PLUGIN configs found!"
+
+        # the correct slot has already been found, just need to return it
+        assert self.slots[idx]['__scope'] == SCOPE_PLUGIN, \
+                "Something has gone horrendously wrong"
+        return self.slots[idx]
 
 class Configuration(object):
 
@@ -115,6 +144,9 @@ class Configuration(object):
         if not (filename is None):
             self._filename = os.path.abspath(os.path.expanduser(filename))
         else:
+            print("WARNING: Anonymous config created!")
+            traceback.print_stack()
+            print("="*40)
             self._filename = None
         self._readonly = readonly
         self.zipped = zipped

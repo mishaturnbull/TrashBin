@@ -41,13 +41,17 @@ def load_all_savestates(states, handler):
 
 def write_text_file(filename, factories):
     cfg = config.Configuration(filename, zipped=False)
-    cfg.overridedata(get_all_savestates(factories))
+    cfg.overridedata({
+        "__scope": config.SCOPE_PLUGIN,
+        "factories": get_all_savestates(factories),
+        })
     cfg.save()
 
 def load_text_file(filename, handler):
     cfg = config.Configuration(filename, zipped=False)
     savestates = cfg.data()
-    return load_all_savestates(savestates, handler)
+    assert cfg['__scope'] == config.SCOPE_PLUGIN, "Not a plugin config!"
+    return load_all_savestates(savestates['factories'], handler)
 
 def write_zip_file(filename, factories):
     cfg = config.Configuration(filename, zipped=True)

@@ -33,7 +33,7 @@ def _classbuilder(typ):
             assert isinstance(val, typ), "Tried to assign wrong type to " \
                     "variable expecting {}: {}".format(typ, val)
             super().set(val)
-    return NewVarType
+    return TypeStrictVar
 
 IntVar = _classbuilder(int)
 StringVar = _classbuilder(str)
