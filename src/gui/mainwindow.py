@@ -127,7 +127,7 @@ class MainPanelUI(object):
                 continue
             self.ui_filelistbox.insert(1, newfile)
         self.mainexec.set_files(self.ui_filelistbox.get(0, tk.END))
-    
+
     def cb_rm_files(self):
         """
         Callback to remove file(s) from our input file list
@@ -152,6 +152,24 @@ class MainPanelUI(object):
         for i in range(len(self.files))[::-1]:
             self.ui_filelistbox.delete(i)
         self.mainexec.set_files(self.ui_filelistbox.get(0, tk.END))
+
+    def cb_add_dirs(self):
+        newdir = tkfd.askdirectory(
+                parent=self.root, title="Folder selection",
+                )
+        self.ui_dirlistbox.insert(1, newdir)
+        self.mainexec.set_dirs(self.ui_dirlistbox.get(0, tk.END))
+
+    def cb_rm_dirs(self):
+        selected = self.ui_dirlistbox.curselection()
+        for i in selected[::-1]:
+            self.ui_dirlistbox.delete(i)
+        self.mainexec.set_dirs(self.ui_dirlistbox.get(0, tk.END))
+
+    def cb_rm_all_dirs(self):
+        for i in range(len(self.config.inputs['directories']))[::-1]:
+            self.ui_dirlistbox.delete(i)
+        self.mainexec.set_dirs([])
 
     def cb_add_plugs(self):
         """
@@ -357,8 +375,35 @@ class MainPanelUI(object):
 
         dirframe = tk.Frame(notebook)
         notebook.add(dirframe, text="Folders")
+        dirframe.grid_columnconfigure(0, weight=1, uniform='a')
+        dirframe.grid_columnconfigure(1, weight=1, uniform='a')
+
+        self.ui_dirlistbox = tk.Listbox(dirframe, height=20, width=40,
+                selectmode='multiple')
+        self.ui_dirlistbox.grid(row=0, column=0, columnspan=2)
+
+        # we don't need to save this for anything later on
+        adddirbtn = tk.Button(dirframe, text="Add Folder(s)",
+                command=self.cb_add_dirs)
+        adddirbtn.grid(row=1, column=0, columnspan=2, sticky='nesw')
+
+        rmdirbtn = tk.Button(dirframe, text='Remove Selected',
+                command=self.cb_rm_dirs)
+        rmdirbtn.grid(row=2, column=0, sticky='nesw')
+        rmalldirbtn = tk.Button(dirframe, text='Remove All',
+                command=self.cb_rm_all_dirs)
+        rmalldirbtn.grid(row=2, column=1, sticky='nesw')
+
+
         textframe = tk.Frame(notebook)
         notebook.add(textframe, text="Raw text")
+
+        self.rawtextvar = tk.StringVar()
+        self.rawtextentry = tk.Entry(textframe, textvariable=self.rawtextvar)
+        textframe.grid_columnconfigure(0, weight=1)
+        textframe.grid_rowconfigure(0, weight=1)
+        self.rawtextentry.grid(row=0, column=0, sticky='nesw')
+
     
     def spawn_ui_frame2(self):
         """

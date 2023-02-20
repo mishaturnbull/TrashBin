@@ -87,12 +87,20 @@ class MainExecutor(object):
             self._gui.notify_done()
 
     def set_files(self, newfiles):
-        self.mastercfg.inputs['filenames'] = newfiles
+        self.mastercfg.inputs['filenames'] = list(newfiles)
 
     def add_file(self, newfile):
         if newfile in self.mastercfg.inputs['filenames']:
             return
         self.mastercfg.inputs['filenames'].append(newfile)
+
+    def add_dir(self, newdir):
+        if newdir in self.mastercfg.inputs['directories']:
+            return
+        self.mastercfg.inputs['directories'].append(newdir)
+
+    def set_dirs(self, dirs):
+        self.mastercfg.inputs['directories'] = list(dirs)
 
     def add_plug_by_idx(self, idx):
         plugin = _pad.plugin_list()[1][idx]
