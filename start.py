@@ -7,7 +7,6 @@ Starts the TrashBin program.
 
 import argparse
 import sys
-import os
 
 MASTER_FILENAME = "~/.trashbin-master.json"
 
@@ -43,16 +42,16 @@ parser.add_argument(
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    os.environ['_TRASHBIN_OPERMODE'] = args.opermode
-    # we have to specifically import our tkinter module here, it will override
-    # the program-wide import path to insert tkinter stubs if necessary
+    # we have to import this and optionally override the tkinter module before
+    # importing anything else
     from src.tkstubs import tb_override_tkinter
-    tb_override_tkinter()
+    tb_override_tkinter(args.opermode)
     import src.processor.main as mainproc
     mainexec = mainproc.MainExecutor(args.mastercfg,
             opermode=args.opermode,
             extraconfigs=args.extraconfigs,
         )
+
     import code
     code.interact(local=locals())
 
