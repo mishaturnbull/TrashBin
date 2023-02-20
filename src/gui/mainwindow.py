@@ -326,27 +326,39 @@ class MainPanelUI(object):
         """
         Spawns the left frame for adding files
         """
-        self.frame1 = tk.LabelFrame(self.root, text="File selection",
-                relief=tk.RIDGE)
-        self.frame1.grid(row=0, column=0)
-        self.frame1.grid_columnconfigure(0, weight=1, uniform='a')
-        self.frame1.grid_columnconfigure(1, weight=1, uniform='a')
+        self.frame1 = tk.LabelFrame(self.root, text="Inputs", relief=tk.RIDGE)
+        notebook = ttk.Notebook(self.frame1)
+        notebook.grid(row=0, column=0, sticky='nsew')
 
-        self.ui_filelistbox = tk.Listbox(self.frame1, height=20, width=40,
+
+
+        self.frame1.grid(row=0, column=0)
+
+        fileframe = tk.Frame(notebook)
+        notebook.add(fileframe, text="Files")
+        fileframe.grid_columnconfigure(0, weight=1, uniform='a')
+        fileframe.grid_columnconfigure(1, weight=1, uniform='a')
+
+        self.ui_filelistbox = tk.Listbox(fileframe, height=20, width=40,
                 selectmode='multiple')
         self.ui_filelistbox.grid(row=0, column=0, columnspan=2)
 
         # we don't need to save this for anything later on
-        addfilebtn = tk.Button(self.frame1, text="Add File(s)",
+        addfilebtn = tk.Button(fileframe, text="Add File(s)",
                 command=self.cb_add_files)
         addfilebtn.grid(row=1, column=0, columnspan=2, sticky='nesw')
 
-        rmfilebtn = tk.Button(self.frame1, text='Remove Selected',
+        rmfilebtn = tk.Button(fileframe, text='Remove Selected',
                 command=self.cb_rm_files)
         rmfilebtn.grid(row=2, column=0, sticky='nesw')
-        rmallbtn = tk.Button(self.frame1, text='Remove All',
+        rmallbtn = tk.Button(fileframe, text='Remove All',
                 command=self.cb_rm_all_files)
         rmallbtn.grid(row=2, column=1, sticky='nesw')
+
+        dirframe = tk.Frame(notebook)
+        notebook.add(dirframe, text="Folders")
+        textframe = tk.Frame(notebook)
+        notebook.add(textframe, text="Raw text")
     
     def spawn_ui_frame2(self):
         """
