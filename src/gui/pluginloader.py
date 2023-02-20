@@ -20,9 +20,7 @@ class PluginLoaderPanel(object):
     def cb_loadsel(self):
         selected = self.pluginselbox.curselection()
         for i in selected:
-            plugin = self.plugins_available[i]
-            instance = plugin(self.parent)
-            self.parent.factmap.update({instance.uuid: instance})
+            plugin = self.parent.mainexec.add_plug_by_idx(i)
             self.parent.ui_pluglistbox.insert(tk.END, plugin.plugin_name)
 
     def cb_describe(self, event):

@@ -13,13 +13,8 @@ import os
 import time
 import src.config.config as config
 import src.plugins.persist as persist
+import src.plugins._plugin_autodetect as _pad
 import src.gui.mainwindow as mainwindow
-import src.tkstubs as tkstubs
-
-if tkstubs.HAS_DISPLAY:
-    import tkinter as tk
-else:
-    import src.tkstubs.tkstubs as tk
 
 # the processor selection isn't as user-importable as plugins, we just import
 # them all and then pick
@@ -29,11 +24,24 @@ class MainExecutor(object):
 
     def __init__(self, mastercfgfile,
             opermode='gui',
+            extraconfigs=[],
             ):
         self.mastercfg = config.ConfigManager(mastercfgfile)
+        for extra in extraconfigs:
+            self.mastercfg.load_new_config_from_file(
+                    extra,
+                    permanent=False
+                )
         self.opermode = opermode
         self.factmap = {}
-        self.files = []
+        if self.mastercfg.plugins:
+            self.add_plugin_by_savedata(self.mastercfg.plugins['factories'])
+
+        if self.mastercfg.inputs:
+            self.files = self.mastercfg.inputs['filenames']
+        else:
+            self.files = []
+        self.progress = 0
 
         # we've hard-selected a single thread processor for now, because that's
         # the only one implemented.  for future when there's more
@@ -62,6 +70,35 @@ class MainExecutor(object):
         # let's just get into it!
         self.go()
 
+    def notify_work_done(self, amt=1):
+        self.progress += amt
+        if self.gui:
+            self._gui.notify_work_done(amt)
+
+    def notify_done(self):
+        self.processor.active = False
+        if self.gui:
+            self._gui.notify_done()
+
+    def set_files(self, newfiles):
+        self.files = newfiles
+
+    def add_file(self, newfile):
+        if newfile in self.files:
+            return
+        self.files.append(newfile)
+
+    def add_plugin_by_index(self, idx):
+        plugin = _pad.plugin_list()[1][idx]
+        instance = plugin(self)
+        self.factmap.update({instance.uuid: instance})
+        return plugin
+
+    def add_plugin_by_savedata(self, data):
+        factories = persist.load_all_savestates(data, self)
+        for factory in factories:
+            self.factmap.update({factory.uuid: factory})
+
     @property
     def config(self):
         return self.mastercfg
@@ -76,7 +113,7 @@ class MainExecutor(object):
 
     @property
     def factories(self):
-        return self.factmap.values()
+        return self.factmap
 
     def go(self):
         if len(self.factories) == 0:

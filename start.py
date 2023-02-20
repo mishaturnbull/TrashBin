@@ -7,7 +7,7 @@ Starts the TrashBin program.
 
 import argparse
 import sys
-import src.processor.main as mainproc
+import os
 
 MASTER_FILENAME = "~/.trashbin-master.json"
 
@@ -31,11 +31,27 @@ parser.add_argument(
         dest='mastercfg',
         required=False
     )
+parser.add_argument(
+        '-c', '--config',
+        type=str,
+        help="Specify filepath for additional config files",
+        action='append',
+        metavar='extraconfigs',
+        dest='extraconfigs',
+        default=[]
+    )
 
 if __name__ == '__main__':
     args = parser.parse_args()
+    os.environ['_TRASHBIN_OPERMODE'] = args.opermode
+    # we have to specifically import our tkinter module here, it will override
+    # the program-wide import path to insert tkinter stubs if necessary
+    from src.tkstubs import tb_override_tkinter
+    tb_override_tkinter()
+    import src.processor.main as mainproc
     mainexec = mainproc.MainExecutor(args.mastercfg,
-            opermode=args.opermode
+            opermode=args.opermode,
+            extraconfigs=args.extraconfigs,
         )
     import code
     code.interact(local=locals())

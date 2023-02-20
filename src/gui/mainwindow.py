@@ -124,8 +124,6 @@ class MainPanelUI(object):
         """
         Callback to add file(s) to our input file list.
         """
-        for a, b in self.mainexec.factmap.items():
-            print(a, b.__dict__)
         newfiles = tkfd.askopenfilenames(
                 parent=self.root, title="Log selection",
                 filetypes=(("Binary logs", "*.bin"),("Text logs", "*.log"),
@@ -136,6 +134,7 @@ class MainPanelUI(object):
             if newfile in self.files:
                 continue
             self.ui_filelistbox.insert(1, newfile)
+        self.mainexec.set_files(self.ui_filelistbox.get(0, tk.END))
     
     def cb_rm_files(self):
         """
@@ -145,6 +144,7 @@ class MainPanelUI(object):
         # delete in reverse to prevent over-indexing
         for i in selected[::-1]:
             self.ui_filelistbox.delete(i)
+        self.mainexec.set_files(self.ui_filelistbox.get(0, tk.END))
 
     def cb_rm_all_files(self):
         """
@@ -159,6 +159,7 @@ class MainPanelUI(object):
                 return
         for i in range(len(self.files))[::-1]:
             self.ui_filelistbox.delete(i)
+        self.mainexec.set_files(self.ui_filelistbox.get(0, tk.END))
 
     def cb_add_plugs(self):
         """
@@ -305,7 +306,6 @@ class MainPanelUI(object):
 
     def notify_done(self):
         self.btn_go.config(text="Done! (Click to restart)")
-        self.processor.active = False
 
     def spawn_ui_menubar(self):
         """

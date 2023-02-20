@@ -7,7 +7,13 @@ Provides stubs for Tkinter variables if running in a non-graphical environment.
 
 import os
 
+headless = False
+
+print(os.getenv('_TRASHBIN_OPERMODE'))
+
 def has_display():
+    if 'headless' in os.getenv('_TRASHBIN_OPERMODE'):
+        return False
     disp = os.getenv('DISPLAY')
     try:
         return len(disp) > 0
@@ -39,5 +45,6 @@ IntVar = _classbuilder(int)
 StringVar = _classbuilder(str)
 BooleanVar = _classbuilder(bool)
 
-
+# >>> tk.end  --> 'end'
+END = 'end'
 

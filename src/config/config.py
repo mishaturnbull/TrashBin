@@ -117,26 +117,30 @@ class ConfigManager(object):
             files.append(os.path.split(config.filename)[1])
         return files
 
+    def get_configs_in_scope(self, scope):
+        outs = []
+        for config in self.slots:
+            if config['__scope'] == scope:
+                outs.append(config)
+        return outs
+
     @property
     def plugins(self):
-        # first, make sure we have only one at most
-        # we will use the same loop to identify the index of the slot to return
-        counter = 0
-        idx = -1
-        i = 0
-        for config in self.slots:
-            if config['__scope'] == SCOPE_PLUGIN:
-                counter += 1
-                idx = i
-            i += 1
-        assert counter < 2, "Multiple SCOPE_PLUGIN(={}) configs specified: {}" \
-                .format(SCOPE_PLUGIN, counter)
-        assert idx >= 0, "No SCOPE_PLUGIN configs found!"
+        confs = self.get_configs_in_scope(SCOPE_PLUGIN)
+        assert len(confs) <= 1, "Cannot have more than one plugin " \
+                "configuration loaded, got {}".format(len(confs))
+        if len(confs) > 0:
+            return confs[0]
+        return None
 
-        # the correct slot has already been found, just need to return it
-        assert self.slots[idx]['__scope'] == SCOPE_PLUGIN, \
-                "Something has gone horrendously wrong"
-        return self.slots[idx]
+    @property
+    def inputs(self):
+        confs = self.get_configs_in_scope(SCOPE_INPUTS)
+        assert len(confs) <= 1, "Cannot have more than one input " \
+                "configuration loaded, got {}".format(len(confs))
+        if len(confs) > 0:
+            return confs[0]
+        return None
 
 class Configuration(object):
 
