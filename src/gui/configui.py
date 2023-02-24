@@ -233,7 +233,10 @@ class ConfigurationEditorPanel(object):
         self._path = path
 
         if self.parent.config['debug']:
-            self.pathlbl.config(text=repr(path))
+            try:
+                self.pathlbl.config(text=repr(path))
+            except AttributeError:
+                pass
 
         self.update_editor_fields(path, value)
 
@@ -324,14 +327,22 @@ class ConfigurationEditorPanel(object):
         typefunc = _TYPE_CONVS[self.edittype.get()]
 
         dic = self.activeslot.data()
+        next_needs_int = False
         for key in self._path[::-1]:
-            if (isinstance(dic[key], dict) or \
-                    isinstance(dic[key], list)):
+            if next_needs_int:
+                key = int(key)
+                next_needs_int = False
+            if isinstance(dic[key], dict):
                 dic = dic[key]
                 continue
-            else:
-                break
+            if isinstance(dic[key], list):
+                dic = dic[key]
+                next_needs_int = True
+                continue
+            break
 
+        if isinstance(dic, list):
+            newkey = int(newkey)
         dic[newkey] = typefunc(val)
         if newkey != key:
             del dic[key]
