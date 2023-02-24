@@ -309,6 +309,7 @@ class MainPanelUI(object):
             print("Starting new plugin UI")
         try:
             # clean up frame3 before handing it off
+            self.frame3.destroy()
             del self.frame3
             self.spawn_ui_frame3()
             self._plugui.start_ui(self.frame3)
