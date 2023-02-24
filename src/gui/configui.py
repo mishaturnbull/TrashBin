@@ -325,13 +325,13 @@ class ConfigurationEditorPanel(object):
 
         dic = self.activeslot.data()
         for key in self._path[::-1]:
-            if not (isinstance(dic[key], dict) or \
+            if (isinstance(dic[key], dict) or \
                     isinstance(dic[key], list)):
                 dic = dic[key]
                 continue
             else:
                 break
-        
+
         dic[newkey] = typefunc(val)
         if newkey != key:
             del dic[key]
