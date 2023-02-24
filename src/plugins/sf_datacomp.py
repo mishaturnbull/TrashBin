@@ -151,7 +151,7 @@ class SFDataCompFactory(pluginbase.TBPluginFactory):
 
     def stop_ui(self, frame):
         self.oframe.destroy()
-        self.filterframe.destroy()
+        self.lineframe.destroy()
         frame.grid_rowconfigure(1, weight=0)
         frame.grid_columnconfigure(0, weight=0)
 

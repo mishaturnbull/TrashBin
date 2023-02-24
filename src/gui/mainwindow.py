@@ -11,9 +11,6 @@ import tkinter as tk
 import tkinter.filedialog as tkfd
 import tkinter.messagebox as tkmb
 from tkinter import ttk
-import os
-import time
-import src.logutils.DFReader as dfr
 import src.plugins._plugin_autodetect as _pad
 import src.gui.pluginloader as pluginloader
 import src.config.config as config
@@ -276,6 +273,12 @@ class MainPanelUI(object):
         except IndexError:
             # no selection
             idx = None
+            # happens when user tabs or interacts with something out of focus
+            # we usually don't want to clear the plugUI in this case, as the
+            # focus may have gone over there -- and we shouldn't destroy that
+            # UI from under the user
+            return
+
         # first thing to do is destroy the old ui if it's still up
         if not (self._plugui is None):
             if self.config['debug']:
@@ -305,6 +308,9 @@ class MainPanelUI(object):
         if self.config['debug']:
             print("Starting new plugin UI")
         try:
+            # clean up frame3 before handing it off
+            del self.frame3
+            self.spawn_ui_frame3()
             self._plugui.start_ui(self.frame3)
         except:
             if self.config['debug']:
@@ -414,7 +420,7 @@ class MainPanelUI(object):
         """
         Spawns the middle frame for adding/listing plugins
         """
-        # we want this frame to be the same size as the first one, so 
+        # we want this frame to be the same size as the first one, so
         # force an update then use its width and height in the instantiator
         self.frame1.update()
         self.frame2 = tk.LabelFrame(self.root, text="Plugin selection",
@@ -435,7 +441,7 @@ class MainPanelUI(object):
         plugupbtn = tk.Button(self.frame2, text="Move plugin up",
                 command=self.cb_plug_up)
         plugupbtn.grid(row=1, column=0, columnspan=2, sticky='esw')
-        
+
         plugdnbtn = tk.Button(self.frame2, text="Move plugin down",
                 command=self.cb_plug_dn)
         plugdnbtn.grid(row=2, column=0, columnspan=2, sticky='esw')
