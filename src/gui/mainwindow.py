@@ -273,7 +273,10 @@ class MainPanelUI(object):
         """
         if total < 0:
             self.pbar['mode'] = 'indeterminate'
-            self.pbar.start()
+            if self.mainexec.active:
+                self.pbar.start()
+            else:
+                self.pbar.stop()
         else:
             self.pbar['mode'] = 'determinate'
         self.pbar['maximum'] = total
@@ -283,7 +286,7 @@ class MainPanelUI(object):
         """
         Reset pbar to default options.
         """
-        self.adjust_pbar(0, -1)
+        self.adjust_pbar(0, 0)
 
     def cb_go(self):
         """
@@ -293,12 +296,15 @@ class MainPanelUI(object):
             print("Handling go button")
         if not self.mainexec.active:
             # start
+            if not self.mainexec.test_will_start():
+                # nothing much to do, then
+                return
             if self.config['debug']:
                 print("Starting processor")
             self.reset_pbar()
             self.btn_go.config(text="Stop")
             self.mainexec.go()
-        else:
+        elif self.mainexec.active:
             # inactive
             self.mainexec.stop()
             self.btn_go.config(text="Start")
@@ -521,7 +527,7 @@ class MainPanelUI(object):
         self.btn_go.grid(row=0, column=0, sticky='nesw')
 
         self.pbar = ttk.Progressbar(self.frame4, orient='horizontal',
-                length=self.frame4.winfo_width(), mode='indeterminate',
+                length=self.frame4.winfo_width(), mode='determinate',
                 variable=self.pbar_var, maximum=100)
         self.pbar.grid(row=1, column=0, sticky='sw')
 

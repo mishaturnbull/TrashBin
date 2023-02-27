@@ -149,8 +149,11 @@ class MainExecutor(object):
     def factories(self):
         return list(self.factmap.values())
 
+    def test_will_start(self):
+        return len(self.factories) > 0
+
     def go(self):
-        if len(self.factories) == 0:
+        if not self.test_will_start():
             print("No plugins specified, nothing to do!")
             return
         if self.config['debug']:
@@ -163,8 +166,11 @@ class MainExecutor(object):
     def stop(self):
         if self.config['debug']:
             print("Stopping processor")
+        self._gui.adjust_pbar(0, -1)
         self.processor.stop()
         self.processor.active = False
+        if self.gui:
+            self._gui.reset_pbar()
 
     def load_plugins(self, filename):
         if os.path.splitext(filename)[1].endswith("tbz"):

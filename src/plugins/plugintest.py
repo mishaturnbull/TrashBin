@@ -39,7 +39,7 @@ class PluginTestFactory(pluginbase.TBPluginFactory):
             self.work_per_file)).grid(row=0, column=0)
 
     def stop_ui(self, frame):
-        self.iframe.delete()
+        self.iframe.destroy()
 
     def export_savestate(self):
         return {
@@ -66,6 +66,10 @@ class TestPlugin(pluginbase.TrashBinPlugin):
     def __init__(self, handler, processor, work_per_file):
         super().__init__(handler, processor)
         self.work_per_file = work_per_file
+
+    @property
+    def work_total(self):
+        return self.work_per_file
     
     def run_filename(self, filename):
         print("Plugin test: in run_filename: {}".format(filename))

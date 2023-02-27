@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import threading
+import sys
 import src.logutils.DFReader as dfr
 import src.processor.processorbase as pb
 
@@ -15,25 +16,39 @@ class Worker(object):
     """
     def __init__(self, handler):
         self.handler = handler
+        self.do_abort = False
 
     @property
     def data(self):
         return self.handler.data
 
+    def _operate(self, func, *args, **kwargs):
+        if self.do_abort:
+            sys.exit(1)
+        func(*args, **kwargs)
+
     def stage_filename(self, filename, plugins):
         for plugin in plugins:
+            if self.do_abort:
+                sys.exit(1)
             plugin.run_filename(filename)
 
     def stage_filehandle(self, handle, plugins):
         for plugin in plugins:
+            if self.do_abort:
+                sys.exit(1)
             plugin.run_filehandle(handle)
 
     def stage_parsedlog(self, dfl, plugins):
         for plugin in plugins:
+            if self.do_abort:
+                sys.exit(1)
             plugin.run_parsedlog(dfl)
 
     def stage_messages(self, msgs, plugins):
         for plugin in plugins:
+            if self.do_abort:
+                sys.exit(1)
             plugin.run_messages(msgs)
 
     def process_one_log(self, filename):
