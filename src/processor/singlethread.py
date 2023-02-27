@@ -90,6 +90,10 @@ class SingleThreadProcessor(pb.ProcessorBase):
                 args=()
             )
 
+    @property
+    def plugins(self):
+        return self.worker.plugins
+
     def run(self):
         self.process.start()
 

@@ -36,7 +36,7 @@ class TBPluginFactory(object):
 
     @property
     def work_per_file(self):
-        raise NotImplemented("Property work_per_file must be overriden!")
+        raise NotImplementedError("Property work_per_file must be overriden!")
 
     def _export_savestate(self):
         d = {'plugin_name': type(self).plugin_name,
@@ -47,7 +47,7 @@ class TBPluginFactory(object):
         return d
 
     def export_savestate(self):
-        raise NotImplemented("Method export_savestate must be overriden!")
+        raise NotImplementedError("Method export_savestate must be overriden!")
 
     def _load_savestate(self, state, handler):
         assert state['plugin_cls'] == type(self).__name__, \
@@ -58,19 +58,19 @@ class TBPluginFactory(object):
         self.load_savestate(state)
 
     def load_savestate(self, state):
-        raise NotImplemented("Method load_savestate must be overriden!")
-    
+        raise NotImplementedError("Method load_savestate must be overriden!")
+
     def start_ui(self, frame):
-        raise NotImplemented("Method start_ui must be overriden!")
+        raise NotImplementedError("Method start_ui must be overriden!")
 
     def stop_ui(self, frame):
-        raise NotImplemented("Method stop_ui must be overriden!")
+        raise NotImplementedError("Method stop_ui must be overriden!")
 
     def cleanup_and_exit(self):
-        raise NotImplemented("Method cleanup_and_exit must be overriden!")
+        raise NotImplementedError("Method cleanup_and_exit must be overriden!")
 
     def give_plugin(self, processor=None):
-        raise NotImplemented("Method give_plugin must be overriden!")
+        raise NotImplementedError("Method give_plugin must be overriden!")
 
     def notify_work_done(self, amt=1):
         """
@@ -84,7 +84,6 @@ class TrashBinPlugin(object):
     """
     Base class for a TrashBin plugin.
     """
-    total_work = 0
 
     def __init__(self, handler, processor=None):
         """
@@ -106,8 +105,12 @@ class TrashBinPlugin(object):
     def coopdata(self):
         return self.processor.data
 
+    @property
+    def work_total(self):
+        raise NotImplementedError("work_total property must be overriden!")
+
     def cleanup_and_exit(self):
-        raise NotImplemented("Method cleanup_and_exit must be overriden!")
+        raise NotImplementedError("Method cleanup_and_exit must be overriden!")
 
     def run_filename(self, filename):
         pass

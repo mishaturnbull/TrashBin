@@ -50,12 +50,12 @@ class ConfigManager(object):
 
         # make sure it's not a duplicate
         for slot in self.slots:
-           if slot['__uuid'] == config['__uuid']:
-               print("WARNING: Trying to load config already present as new." \
+            if slot['__uuid'] == config['__uuid']:
+                print("WARNING: Trying to load config already present as new." \
                        "  Not re-adding, and triggering config reload " \
                        "instead!")
-               slot.load()
-               return
+                slot.load()
+                return
 
         self.slots.append(config)
         if permanent:

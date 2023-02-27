@@ -10,7 +10,6 @@ provides a backend for the GUI if necessary.
 
 import sys
 import os
-import time
 import uuid
 import tkinter as tk
 import src.config.config as config
@@ -29,25 +28,14 @@ class MainExecutor(object):
             extraconfigs=[],
             ):
         self.mastercfg = config.ConfigManager(mastercfgfile)
-        for extra in extraconfigs:
-            self.mastercfg.load_new_config_from_file(
-                    extra,
-                    permanent=False
-                )
+        self.work_total = 0
+        self.work_done = 0
+        self.available_factories = _pad.plugin_list()[1]
+        self._extraconfigs = extraconfigs
         self.opermode = opermode
         self.factmap = {}
         if self.mastercfg.plugins:
             self.add_plugin_by_savedata(self.mastercfg.plugins['factories'])
-        if not self.mastercfg.inputs:
-            inp = config.Configuration(None)
-            inp['filenames'] = []
-            inp['directories'] = []
-            inp['rawtext'] = ""
-            inp['__uuid'] = str(uuid.uuid4())
-            inp['__scope'] = config.SCOPE_INPUTS
-            self.mastercfg.slots.append(inp)
-
-        self.progress = 0
 
         # we've hard-selected a single thread processor for now, because that's
         # the only one implemented.  for future when there's more
@@ -56,6 +44,23 @@ class MainExecutor(object):
         self.processor = singlethread.SingleThreadProcessor(self)
 
         self._start_main_operations()
+
+    def _load_extra_configs(self):
+        for extra in self._extraconfigs:
+            self.mastercfg.load_new_config_from_file(
+                    extra,
+                    permanent=False
+                )
+        if self.mastercfg['factories']:
+            self.load_plugins(self.mastercfg.plugins.filename)
+        if not self.mastercfg.inputs:
+            inp = config.Configuration(None)
+            inp['filenames'] = []
+            inp['directories'] = []
+            inp['rawtext'] = ""
+            inp['__uuid'] = str(uuid.uuid4())
+            inp['__scope'] = config.SCOPE_INPUTS
+            self.mastercfg.slots.append(inp)
 
     def _start_main_operations(self):
         if self.opermode == 'gui':
@@ -69,21 +74,29 @@ class MainExecutor(object):
 
     def _start_gui(self):
         self._gui = mainwindow.MainPanelUI(self)
+        self._load_extra_configs()
         self._gui.start()
 
     def _start_headless(self):
         # there's no user to click go -- we've already got the master config,
         # let's just get into it!
+        self._load_extra_configs()
         self.go()
 
+    def _retotal_total_work(self):
+        self.work_total = sum([p.work_total for p in self.processor.plugins])
+
     def notify_work_done(self, amt=1):
-        self.progress += amt
+        self.work_done += amt
+        self._retotal_total_work()
         if self.gui:
-            self._gui.notify_work_done(amt)
+            self._gui.adjust_pbar(self.work_done, self.work_total)
 
     def notify_done(self):
         self.processor.active = False
+        self.work_done = self.work_total
         if self.gui:
+            self._gui.adjust_pbar(self.work_done, self.work_total)
             self._gui.notify_done()
 
     def set_files(self, newfiles):
@@ -133,7 +146,7 @@ class MainExecutor(object):
 
     @property
     def factories(self):
-        return self.factmap.values()
+        return list(self.factmap.values())
 
     def go(self):
         if len(self.factories) == 0:
@@ -177,5 +190,4 @@ class MainExecutor(object):
             if self.config['debug']:
                 print("Saving to JSON file")
             persist.write_text_file(filename, list(self.factmap.values()))
-        
 

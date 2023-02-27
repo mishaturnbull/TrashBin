@@ -24,14 +24,13 @@ class MainPanelUI(object):
 
     def __init__(self, mainexec):
         self.mainexec = mainexec
-        self.available_factories = []
         self.root = tk.Tk()
         self.pbar_var = tk.IntVar()
         self.pbar_var.set(0)
         self._plugui = None
+        self.spawn_ui()
 
     def start(self):
-        self.spawn_ui()
         self.root.mainloop()
 
     @property
@@ -58,7 +57,7 @@ class MainPanelUI(object):
         # to correlate that back to the actual factory object here
         factories = []
         for pname in l:
-            for availplug in self.available_factories:
+            for availplug in self.mainexec.available_factories:
                 if availplug.plugin_name == pname:
                     factories.append(availplug)
         return factories
@@ -244,6 +243,24 @@ class MainPanelUI(object):
         self.ui_pluglistbox.insert(idx + 1, item)
         self.ui_pluglistbox.selection_set(idx + 1)
 
+    def adjust_pbar(self, done, total):
+        """
+        Adjusts the progress bar to have :param done: out of :param total:
+        """
+        if total < 0:
+            self.pbar['mode'] = 'indeterminate'
+            self.pbar.start()
+        else:
+            self.pbar['mode'] = 'determinate'
+        self.pbar['maximum'] = total
+        self.pbar_var.set(done)
+
+    def reset_pbar(self):
+        """
+        Reset pbar to default options.
+        """
+        self.adjust_pbar(0, -1)
+
     def cb_go(self):
         """
         Callback to handle the start(/stop) button press.
@@ -254,15 +271,14 @@ class MainPanelUI(object):
             # start
             if self.config['debug']:
                 print("Starting processor")
-            self.pbar['maximum'] = self.mainexec.processor.max_work
-            self.pbar_var.set(0)
+            self.reset_pbar()
             self.btn_go.config(text="Stop")
             self.mainexec.go()
         else:
             # inactive
             self.mainexec.stop()
             self.btn_go.config(text="Start")
-            self.pbar_var.set(0)
+            self.reset_pbar()
 
     def cb_plugselect(self, event):
         """
@@ -320,9 +336,6 @@ class MainPanelUI(object):
                 pass
         finally:
             self._plugui.is_active = True
-
-    def notify_work_done(self, amt=1):
-        self.pbar_var.set(self.pbar_var.get() + amt)
 
     def notify_done(self):
         self.btn_go.config(text="Done! (Click to restart)")
@@ -484,7 +497,7 @@ class MainPanelUI(object):
         self.btn_go.grid(row=0, column=0, sticky='nesw')
 
         self.pbar = ttk.Progressbar(self.frame4, orient='horizontal',
-                length=self.frame4.winfo_width(), mode='determinate',
+                length=self.frame4.winfo_width(), mode='indeterminate',
                 variable=self.pbar_var, maximum=100)
         self.pbar.grid(row=1, column=0, sticky='sw')
 
