@@ -71,7 +71,7 @@ class ConfigurationEditorPanel(object):
         editframe = tk.Frame(self.root)
 
         self.cbSlot = ttk.Combobox(topframe, textvariable=self.slotsel,
-                values=self.parent.config.slotfilenames)
+                values=self.parent.config.slotfilenames_for_ui)
         self.cbSlot.grid(row=0, column=0, sticky='news')
         btnAddSlot = tk.Button(topframe, text="Add to slots",
                 command=self.cb_addslot)
@@ -176,7 +176,7 @@ class ConfigurationEditorPanel(object):
 
     def cb_slotsel_changed(self, *args):
         newname = self.slotsel.get()
-        allfiles = self.parent.config.slotfilenames
+        allfiles = self.parent.config.slotfilenames_for_ui
         try:
             idx = allfiles.index(newname)
         except ValueError:
@@ -190,13 +190,13 @@ class ConfigurationEditorPanel(object):
     def cb_addslot(self):
         self.parent.config.load_new_config_from_file(self.uifilepath.get(),
                 readonly=False, permanent=True)
-        self.cbSlot['values'] = self.parent.config.slotfilenames
+        self.cbSlot['values'] = self.parent.config.slotfilenames_for_ui
         self.slotsel.set(os.path.split(self.uifilepath.get())[1])
         self._reload_after_edit()
 
     def cb_rmslot(self):
         self.parent.config.remove_config_from_slots(self.activeslot)
-        self.cbSlot['values'] = self.parent.config.slotfilenames
+        self.cbSlot['values'] = self.parent.config.slotfilenames_for_ui
         self.slotsel.set("")
         self.uifilepath.set("")
         self._clear_tree()

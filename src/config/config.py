@@ -118,6 +118,18 @@ class ConfigManager(object):
                 files.append(os.path.split(config.filename)[1])
         return files
 
+    @property
+    def slotfilenames_for_ui(self):
+        """
+        Identical to the self.slotfilenames, but do not list INPUT or PLUGIN
+        scoped slots.
+        """
+        files = []
+        for config in self.slots:
+            if config.filename and (config['__scope'] == SCOPE_GLOBAL):
+                files.append(os.path.split(config.filename)[1])
+        return files
+
     def get_configs_in_scope(self, scope):
         outs = []
         for config in self.slots:

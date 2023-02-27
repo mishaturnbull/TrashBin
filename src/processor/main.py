@@ -75,6 +75,7 @@ class MainExecutor(object):
     def _start_gui(self):
         self._gui = mainwindow.MainPanelUI(self)
         self._load_extra_configs()
+        self._gui.update_inputs_from_mainexec()
         self._gui.start()
 
     def _start_headless(self):

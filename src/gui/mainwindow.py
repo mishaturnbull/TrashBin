@@ -149,6 +149,30 @@ class MainPanelUI(object):
             self.ui_filelistbox.delete(i)
         self.mainexec.set_files(self.ui_filelistbox.get(0, tk.END))
 
+    def push_files_from_mainexec(self):
+        currfiles = set(self.ui_filelistbox.get(0, tk.END))
+        currfiles |= set(self.mainexec.input['filenames'])
+        for i in range(len(self.files))[::-1]:
+            self.ui_filelistbox.delete(i)
+        for newfile in currfiles:
+            self.ui_filelistbox.insert(1, newfile)
+
+    def push_dirs_from_mainexec(self):
+        currdirs = set(self.ui_dirlistbox.get(0, tk.END))
+        currdirs |= set(self.mainexec.input['directories'])
+        self.cb_rm_all_dirs()
+        for dr in currdirs:
+            self.ui_dirlistbox.insert(1, dr)
+
+    def push_rawtext_from_mainexec(self):
+        self.rawtextentry.delete('1.0', tk.END)
+        self.rawtextentry.insert('1.0', self.mainexec.input['rawtext'])
+
+    def update_inputs_from_mainexec(self):
+        self.push_files_from_mainexec()
+        self.push_dirs_from_mainexec()
+        self.push_rawtext_from_mainexec()
+
     def cb_add_dirs(self):
         newdir = tkfd.askdirectory(
                 parent=self.root, title="Folder selection",
