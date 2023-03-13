@@ -166,7 +166,7 @@ class ConfigurationEditorPanel(object):
 
     def cb_ins_file(self):
         # get a filename from GUI picker and pass it off to the value
-        filename = tkfd.askopenfilenames()
+        filename = tkfd.asksaveasfilename()
         self.editval.set(filename)
 
     def cb_ins_dir(self):
@@ -403,7 +403,6 @@ class ConfigurationEditorPanel(object):
                 title="Select TrashBin configuration file",
                 initialfile=self.uifilepath.get(),
                 filetypes=[('JSON', '*.json'), ('All', '*')],
-                multiple=False
             )
         self.uifilepath.set(newfile)
 
