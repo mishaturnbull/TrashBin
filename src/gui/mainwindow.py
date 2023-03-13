@@ -28,6 +28,12 @@ class MainPanelUI(object):
         self.root = tk.Tk()
         self.pbar_var = tk.IntVar()
         self.pbar_var.set(0)
+        self.status_var = tk.StringVar()
+        self.status_var.set("Waiting for start")
+        self.stage_var = tk.StringVar()
+        self.stage_var.set("Not running")
+        self.status_plug = tk.StringVar()
+        self.status_plug.set("Not running")
         self._plugui = None
 
     def start(self):
@@ -250,19 +256,36 @@ class MainPanelUI(object):
         """
         if self.config['debug']:
             print("Handling go button")
-        if not self.mainexec.active:
-            # start
-            if self.config['debug']:
-                print("Starting processor")
-            self.pbar['maximum'] = self.mainexec.processor.max_work
-            self.pbar_var.set(0)
-            self.btn_go.config(text="Stop")
-            self.mainexec.go()
+        # start
+        if self.config['debug']:
+            print("Starting processor")
+        self.pbar['maximum'] = self.mainexec.processor.max_work
+        self.pbar_var.set(0)
+        self.btn_go.config(text="Stop")
+        self.mainexec.go()
+        self.update_startstop_btns()
+
+    def cb_stop(self):
+        """
+        Callback to handle the stop button press.
+        """
+        if self.config['debug']:
+            print("Handing stop button")
+        self.mainexec.stop()
+        self.update_startstop_btns()
+        #self.pbar_var.set(0)
+        self.update_startstop_btns()
+
+    def update_startstop_btns(self):
+        """
+        Fix enable/disable state.
+        """
+        if self.mainexec.active:
+            self.btn_go.config(state='disabled')
+            self.btn_stop.config(state='normal')
         else:
-            # inactive
-            self.mainexec.stop()
-            self.btn_go.config(text="Start")
-            self.pbar_var.set(0)
+            self.btn_go.config(state='normal')
+            self.btn_stop.config(state='disabled')
 
     def cb_plugselect(self, event):
         """
@@ -483,8 +506,27 @@ class MainPanelUI(object):
                 command=self.cb_go)
         self.btn_go.grid(row=0, column=0, sticky='nesw')
 
+        self.btn_stop = tk.Button(self.frame4, text="Stop",
+                command=self.cb_stop)
+        self.btn_stop.grid(row=0, column=1, sticky='nesw')
+
+        els = [
+            tk.Label(self.frame4, text="Stage:"),
+            tk.Label(self.frame4, textvariable=self.stage_var),
+            tk.Label(self.frame4, text="Plugin:"),
+            tk.Label(self.frame4, textvariable=self.status_plug),
+            tk.Label(self.frame4, text="Status:"),
+            tk.Label(self.frame4, textvariable=self.status_var)
+            ]
+        i = 2
+        for el in els:
+            el.grid(row=0, column=i, sticky='nsw')
+            i += 1
+
+        self.update_startstop_btns()
+
         self.pbar = ttk.Progressbar(self.frame4, orient='horizontal',
                 length=self.frame4.winfo_width(), mode='determinate',
                 variable=self.pbar_var, maximum=100)
-        self.pbar.grid(row=1, column=0, sticky='sw')
+        self.pbar.grid(row=1, column=0, columnspan=i, sticky='sw')
 

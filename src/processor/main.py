@@ -86,6 +86,18 @@ class MainExecutor(object):
         if self.gui:
             self._gui.notify_done()
 
+    def notify_status_update(self, status):
+        if self.gui:
+            self._gui.status_var.set(status)
+
+    def notify_stage_update(self, stage):
+        if self.gui:
+            self._gui.stage_var.set(stage)
+
+    def notify_plugname_update(self, plugname):
+        if self.gui:
+            self._gui.status_plug.set(plugname)
+
     def set_files(self, newfiles):
         self.mastercfg.inputs['filenames'] = list(newfiles)
 
