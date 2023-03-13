@@ -37,8 +37,9 @@ class ConfigManager(object):
         self._master_config = Configuration(master, False, False)
         self.slots = []
 
-        assert 'slots' in self._master_config, "Master config file contains " \
-                "no slot information!"
+        if 'slots' not in self._master_config:
+            self._master_config['slots'] = []
+            self._master_config.save()
 
         for slot in self._master_config['slots']:
             self.load_new_config_from_file(slot['filename'], slot['readonly'])
