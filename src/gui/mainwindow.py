@@ -11,7 +11,7 @@ import tkinter as tk
 import tkinter.filedialog as tkfd
 import tkinter.messagebox as tkmb
 from tkinter import ttk
-import src.plugins._plugin_autodetect as _pad
+from src.plugins import _plugin_autodetect as _pad
 import src.gui.pluginloader as pluginloader
 import src.config.config as config
 import src.gui.configui as configui

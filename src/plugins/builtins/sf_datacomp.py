@@ -9,7 +9,7 @@ import tkinter as tk
 import tkinter.ttk as ttk
 import functools
 import math
-import src.plugins.pluginbase as pluginbase
+from src.plugins import pluginbase
 import src.logutils.DFWriter as dfwriter
 
 

@@ -8,7 +8,7 @@ plugin savestates.
 
 import json
 import zipfile
-import src.plugins._plugin_autodetect as _pad
+from src.plugins import _plugin_autodetect as _pad
 import src.config.config as config
 
 ZIP_INTERNAL_FILENAME = "data.tbp"

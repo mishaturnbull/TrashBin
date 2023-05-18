@@ -8,7 +8,7 @@ a list.
 
 import os
 import importlib
-import src.plugins.pluginbase as pb
+from src.plugins import pluginbase
 
 _KNOWN_FILES = [
         "_plugin_autodetect.py",

@@ -8,7 +8,7 @@ GUI plugin for log message sanitization.
 import os
 import tkinter as tk
 import tkinter.ttk as ttk
-import src.plugins.pluginbase as pluginbase
+from src.plugins import pluginbase
 import src.logutils.message_remover as message_remover
 import src.logutils.DFWriter as dfwriter
 
