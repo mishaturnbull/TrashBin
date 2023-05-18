@@ -7,8 +7,9 @@ a list.
 """
 
 import os
+import glob
 import importlib
-from src.plugins import pluginbase
+from src.plugins import pluginbase as pb
 
 _KNOWN_FILES = [
         "_plugin_autodetect.py",
@@ -51,16 +52,8 @@ def find_plugins_dir(startdir='.'):
         raise FileNotFoundError("I can't find the plugin directory!")
 
 def recursive_list_of_files(startdir='.'):
-    files = os.listdir(startdir)
-    subdirs = []
-    for f in files:
-        if os.path.isdir(os.path.join(startdir, f)):
-            subdirs.append(f)
-            files.remove(f)
-    for subdir in subdirs:
-        subfiles = recursive_list_of_files(os.path.join(startdir, subdir))
-        for subfile in subfiles:
-            files.append(os.path.join(subdir, subfile))
+    path = os.path.join(startdir, '**', '*.py')
+    files = glob.glob(path, recursive=True)
     return files
 
 def list_of_importable_files():
@@ -88,7 +81,7 @@ def wanted_file_list():
 def module_list():
     modules = []
     for plugin in wanted_file_list():
-        filename = os.path.join(find_plugins_dir(), plugin)[:-3]
+        filename = os.path.splitext(plugin)[0]
         modname = filename.replace('/', '.')
         # maintain windows compat, also replace backslashes with dots
         modname = modname.replace('\\', '.')
