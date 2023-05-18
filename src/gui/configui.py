@@ -37,8 +37,8 @@ _TYPE_CONVS = [
         lambda x: None,
         str,
         conv_num,
-        json.loads,
-        lambda x: [x],
+        lambda x: {} if len(x) == 0 else json.loads(x),
+        lambda x: [] if len(x) == 0 else json.loads(x),
         lambda x: False if (x == 'False') else bool(x)
     ]
 
@@ -278,22 +278,21 @@ class ConfigurationEditorPanel(object):
             if len(self._path) == 0:
                 dic = self.activeslot.data()
 
-        newkey = self.editkey.get()
-        newval = self.editval.get()
-        typefunc = _TYPE_CONVS[self.edittype.get()]
+        newkey = ""
+        newval = None
+        typefunc = _TYPE_CONVS[0]
         # sanity checking
         if isinstance(dic, list):
             try:
-                newkey = int(newkey)
-                if newkey > (len(dic) + 1):
-                    tkmb.showwarning(title="Warning", message="Index is " \
-                            "beyond the length of the list!  I'm shortening " \
-                            "it to the end of the list for you.")
-                    newkey = len(dic)
+                newkey = int(self.editkey.get()) + 1
             except ValueError:
-                tkmb.showerror(title="Error", message="Key must be an integer" \
-                        " when inserting in an array!")
-                return
+                newkey = len(dic)
+
+            if newkey > len(dic) + 1:
+                tkmb.showwarning(title="Warning", message="Index is" \
+                        "beyond the length of the list!  I'm shortening " \
+                        "it to the end of the list for you.")
+                newkey = len(dic)
         else:
             if newkey in dic.keys():
                 tkmb.showerror("Error", message="Element already present in" \
@@ -383,7 +382,7 @@ class ConfigurationEditorPanel(object):
                 self.tree.insert(treeparent, 'end', uid, text=key,
                         values=['Dict', ''])
                 self._insert_items(uid, val)
-            
+
             elif isinstance(val, list):
                 self.tree.insert(treeparent, 'end', uid, text=key,
                         values=['Array', ''])
