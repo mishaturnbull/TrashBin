@@ -39,16 +39,21 @@ class PluginLoaderPanel(object):
         selected = self.tree.item(self.tree.focus())
         print(selected)
         if len(selected['tags']) == 0:
-            # selected a parent module, not a plugin.  nothing else to do here.
-            return
+            # selected a parent module, not a plugin
+            text = "This is a module container.  Select the drop-down option" \
+                    " on the far left of this dialog to see this module's" \
+                    " plugins."
 
-        factory_name = selected['tags'][0]
-        plugin_names = [p.__name__ for p in self.plugins_available]
-        plugin_idx = plugin_names.index(factory_name)
-        plugin = self.plugins_available[plugin_idx]
+        else:
+            # an actual plugin
+            factory_name = selected['tags'][0]
+            plugin_names = [p.__name__ for p in self.plugins_available]
+            plugin_idx = plugin_names.index(factory_name)
+            plugin = self.plugins_available[plugin_idx]
 
-        text = "Author: {}\n{}\n\n{}".format(
-                plugin.author_name, plugin.author_email, plugin.plugin_desc)
+            text = "Author: {}\n{}\n\n{}".format(
+                    plugin.author_name, plugin.author_email, plugin.plugin_desc)
+
         # now that we have the text, first delete anything currently in the
         # description box to clear it out
         self.detailsbox.delete('1.0', tk.END)
