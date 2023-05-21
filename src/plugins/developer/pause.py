@@ -7,7 +7,7 @@ Test GUI plugin for debug purposes
 
 import code
 import tkinter as tk
-from tkinter import ttk, messagebox as tkmb
+from tkinter import messagebox as tkmb
 from src.plugins import pluginbase
 
 _PHASES = [
@@ -18,18 +18,31 @@ _PHASES = [
     ]
 
 def pause_popup(phase):
+    """
+    Execute the GUI-popup for user pause at specified phase.
+    """
+    phase = phase.lower().strip()
     msg = f"I have paused execution as requested in the {phase} phase.  " \
             "Click OK when ready to continue!"
     tkmb.showinfo(title="User pause", message=msg)
 
+# plug argument can be used from console
+# pylint: disable=W0613
 def pause_repl(phase, plug):
+    """
+    Execute the drop-into-REPL pause action at specified phase.
+    """
+    phase = phase.lower().strip()
     print(f"\n\nI have paused execution as requested in the {phase} phase, "\
             "and invoked an interactive console session.  Send an EOF to "\
             "exit (ctrl-D at the prompt) and continue execution.\n")
-    self = plug
+    # passing local=locals() gives user access to the `plug` variable
     code.interact(local=locals())
 
 def handle_phase(plug, idx):
+    """
+    Pause control logic for a given phase index.
+    """
     var = plug.enables[idx]
     if var == 1:
         pause_popup(_PHASES[idx])
@@ -37,6 +50,9 @@ def handle_phase(plug, idx):
         pause_repl(_PHASES[idx], plug)
 
 class PauseFactory(pluginbase.TBPluginFactory):
+    """
+    Factory class for Pause plugin.
+    """
 
     author_name = "Misha Turnbull"
     author_email = "misha@turnbull.link"
@@ -81,7 +97,8 @@ class PauseFactory(pluginbase.TBPluginFactory):
         return {"pause": {i: var.get() for i, var in enumerate(self._enables)}}
 
     def load_savestate(self, state):
-        print(f"LOAD: {state}")
+        # i KNEW i was right to have method overrides for these, and not just
+        # hack at __dict__!  HA!
         for i, val in state["pause"].items():
             self._enables[int(i)].set(val)
 
@@ -89,7 +106,6 @@ class PauseFactory(pluginbase.TBPluginFactory):
         pass
 
     def give_plugin(self, processor=None):
-        print("asked to give plugin")
         return PausePlugin(self, processor, [v.get() for v in self._enables])
 
 
@@ -100,7 +116,6 @@ class PausePlugin(pluginbase.TrashBinPlugin):
 
     def __init__(self, handler, processor, enables):
         super().__init__(handler, processor)
-        print(f"enables: {enables}")
         self.enables = enables
 
     def run_filename(self, filename):
