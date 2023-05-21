@@ -56,9 +56,9 @@ class PauseFactory(pluginbase.TBPluginFactory):
 
     author_name = "Misha Turnbull"
     author_email = "misha@turnbull.link"
-    plugin_name = "Debug plugin test"
-    plugin_desc = "This plugin calls as many functions of its handers as it" \
-            " can in order to perform debug tests."
+    plugin_name = "Pause execution"
+    plugin_desc = "Interrupt normal control flow with either a popup or "\
+            "interactive console.  Execution resumes after."
 
     def __init__(self, handler):
         """
