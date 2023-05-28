@@ -7,7 +7,7 @@ GUI plugin to convert a message to text format.
 
 import os
 import tkinter as tk
-import src.plugins.pluginbase as pluginbase
+from src.plugins import pluginbase
 import src.logutils.DFWriter as dfwriter
 
 LFMT_BINARY = 0

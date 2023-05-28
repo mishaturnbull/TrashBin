@@ -8,7 +8,7 @@ GUI plugin for parameter file generation
 import os
 import tkinter as tk
 import tkinter.ttk as ttk
-import src.plugins.pluginbase as pluginbase
+from src.plugins import pluginbase
 import src.logutils.extract_params as extract_params
 
 

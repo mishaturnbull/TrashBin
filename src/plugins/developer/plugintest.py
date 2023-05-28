@@ -9,7 +9,7 @@ import random
 import time
 import tkinter as tk
 import tkinter.ttk as ttk
-import src.plugins.pluginbase as pluginbase
+from src.plugins import pluginbase
 
 
 class PluginTestFactory(pluginbase.TBPluginFactory):

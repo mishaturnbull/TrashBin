@@ -14,8 +14,7 @@ import time
 import uuid
 import tkinter as tk
 import src.config.config as config
-import src.plugins.persist as persist
-import src.plugins._plugin_autodetect as _pad
+from src.plugins import persist, _plugin_autodetect as _pad
 import src.gui.mainwindow as mainwindow
 
 # the processor selection isn't as user-importable as plugins, we just import
