@@ -43,6 +43,7 @@ class PluginLoaderPanel(object):
             text = "This is a module container.  Select the drop-down option" \
                     " on the far left of this dialog to see this module's" \
                     " plugins."
+            btnstate = 'disabled'
 
         else:
             # an actual plugin
@@ -53,12 +54,19 @@ class PluginLoaderPanel(object):
 
             text = "Author: {}\n{}\n\n{}".format(
                     plugin.author_name, plugin.author_email, plugin.plugin_desc)
+            btnstate = 'normal'
 
         # now that we have the text, first delete anything currently in the
         # description box to clear it out
         self.detailsbox.delete('1.0', tk.END)
         # now put our text in!
         self.detailsbox.insert('1.0', text)
+
+        # since this function is the callback for "something has been selected",
+        # we also want to set the clickability of the "Load plugin" button here
+        # to A. indicate to the user if it can be loaded, and B. help the user
+        # find the button
+        self.addbtn.configure(state=btnstate)
 
     def spawn_ui(self):
         """
@@ -90,9 +98,11 @@ class PluginLoaderPanel(object):
         self.tree.heading('#0', text="Module")
         self.tree.heading('plugin', text="Plugin")
 
-        addbtn = tk.Button(self.root, text="Load plugin",
+        self.addbtn = tk.Button(self.root, text="-->Click to load plugin<--",
                 command=self.cb_loadsel)
-        addbtn.grid(row=1, column=0, columnspan=2, sticky='nesw')
+        self.addbtn.grid(row=1, column=0, columnspan=2, sticky='nesw')
+        # nothing is selected by default
+        self.addbtn.configure(state='disabled')
 
         # plugin details box
         treeframe.update()
