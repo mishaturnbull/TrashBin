@@ -33,7 +33,21 @@ def create_blank_file(filename, zipped=False):
 
 class ConfigManager(object):
 
+    __instance = None
+
+    def __new__(cls, master):
+        if cls.__instance is None:
+            cls.__instance = object.__new__(cls)
+
+        return cls.__instance
+
     def __init__(self, master):
+        if hasattr(self, "_init_called"):
+            # __init__ has already been called on this instance
+            return
+        # __init__ has not been called here, flag it for the next time
+        self._init_called = True
+
         self._master_config = Configuration(master, False, False)
         self.slots = []
 
@@ -282,4 +296,7 @@ class Configuration(object):
     def load(self):
         self._update_data_from_file()
 
+if __name__ == '__main__':
+    import code
+    code.interact(local=locals())
 
