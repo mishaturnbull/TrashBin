@@ -16,6 +16,7 @@ import tkinter as tk
 import src.config.config as config
 from src.plugins import persist, _plugin_autodetect as _pad
 import src.gui.mainwindow as mainwindow
+import src.gui.flowpanel as flowpanel
 
 # the processor selection isn't as user-importable as plugins, we just import
 # them all and then pick
@@ -67,7 +68,8 @@ class MainExecutor(object):
             sys.exit(1)
 
     def _start_gui(self):
-        self._gui = mainwindow.MainPanelUI(self)
+        #self._gui = mainwindow.MainPanelUI(self)
+        self._gui = flowpanel.FlowPanelUI(self)
         self._gui.start()
 
     def _start_headless(self):

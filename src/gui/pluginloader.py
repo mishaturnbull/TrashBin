@@ -7,6 +7,7 @@ Sub-ui specifically for plugin import and loading.
 
 import tkinter as tk
 from tkinter import ttk
+from src.plugins import _plugin_autodetect as _pad
 
 DEFAULT_MODULE_WIDTH = 250
 DEFAULT_PLUGIN_WIDTH = 250
@@ -114,6 +115,7 @@ class PluginLoaderPanel(object):
         self.detailsbox.insert('1.0', "Select a plugin to see more info")
 
         # populate the plugin list
+        self.available_factories = _pad.plugin_list()[1]
         self.update_plugin_list()
 
     def update_plugin_list(self):
