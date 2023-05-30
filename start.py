@@ -52,6 +52,6 @@ if __name__ == '__main__':
             extraconfigs=args.extraconfigs,
         )
 
-    import code
-    code.interact(local=locals())
+#    import code
+#    code.interact(local=locals())
 

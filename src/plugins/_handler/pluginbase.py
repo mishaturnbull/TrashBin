@@ -9,7 +9,15 @@ before use.
 """
 
 import uuid
-import copy
+from src.plugins._handler import guidata
+
+def _verify_io_makes_sense(args):
+    """
+    Verifies the list of given arguments is a valid type declaration.
+    """
+    assert isinstance(args, dict), f"Provided {args} is not a dict!"
+    return True
+
 
 class TBPluginFactory(object):
     """
@@ -21,7 +29,7 @@ class TBPluginFactory(object):
     plugin_name = "Plugin template"
     plugin_desc = "This plugin does nothing, but serves as a template others."
 
-    def __init__(self, handler):
+    def __init__(self, handler, inputs=None, outputs=None):
         """
         Creates a TrashBin plugin factory object.
 
@@ -34,9 +42,16 @@ class TBPluginFactory(object):
         self.is_active = False
         self.debug = self.handler.config['debug']
 
+        self.inputs = inputs or {}
+        self.outputs = outputs or {}
+        _verify_io_makes_sense(self.inputs)
+        _verify_io_makes_sense(self.outputs)
+
+        self.uidata = guidata._UIDataContainer(self)
+
     @property
     def work_per_file(self):
-        raise NotImplemented("Property work_per_file must be overriden!")
+        raise NotImplementedError("Property work_per_file must be overriden!")
 
     def _export_savestate(self):
         d = {'plugin_name': type(self).plugin_name,
@@ -47,7 +62,7 @@ class TBPluginFactory(object):
         return d
 
     def export_savestate(self):
-        raise NotImplemented("Method export_savestate must be overriden!")
+        raise NotImplementedError("Method export_savestate must be overriden!")
 
     def _load_savestate(self, state, handler):
         assert state['plugin_cls'] == type(self).__name__, \
@@ -58,19 +73,19 @@ class TBPluginFactory(object):
         self.load_savestate(state)
 
     def load_savestate(self, state):
-        raise NotImplemented("Method load_savestate must be overriden!")
+        raise NotImplementedError("Method load_savestate must be overriden!")
     
     def start_ui(self, frame):
-        raise NotImplemented("Method start_ui must be overriden!")
+        raise NotImplementedError("Method start_ui must be overriden!")
 
     def stop_ui(self, frame):
-        raise NotImplemented("Method stop_ui must be overriden!")
+        raise NotImplementedError("Method stop_ui must be overriden!")
 
     def cleanup_and_exit(self):
-        raise NotImplemented("Method cleanup_and_exit must be overriden!")
+        raise NotImplementedError("Method cleanup_and_exit must be overriden!")
 
     def give_plugin(self, processor=None):
-        raise NotImplemented("Method give_plugin must be overriden!")
+        raise NotImplementedError("Method give_plugin must be overriden!")
 
     def notify_work_done(self, amt=1):
         """
@@ -107,7 +122,7 @@ class TrashBinPlugin(object):
         return self.processor.data
 
     def cleanup_and_exit(self):
-        raise NotImplemented("Method cleanup_and_exit must be overriden!")
+        raise NotImplementedError("Method cleanup_and_exit must be overriden!")
 
     def run_filename(self, filename):
         pass

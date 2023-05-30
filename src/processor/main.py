@@ -119,7 +119,7 @@ class MainExecutor(object):
         plugin = _pad.plugin_list()[1][idx]
         instance = plugin(self)
         self.factmap.update({instance.uuid: instance})
-        return plugin
+        return instance
 
     def add_plugin_by_savedata(self, data):
         factories = persist.load_all_savestates(data, self)

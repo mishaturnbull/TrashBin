@@ -24,7 +24,9 @@ class PluginTestFactory(pluginbase.TBPluginFactory):
         """
         Create an instance of the plugin test factory.
         """
-        super().__init__(handler)
+        super().__init__(handler,
+                inputs={"inp1": int},
+                outputs={"out1": int, "out2": str})
         self._work_needed = random.randint(10, 100) * 4
 
     @property
